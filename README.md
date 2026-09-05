@@ -143,4 +143,4 @@ systemd 里取消 `Environment=QUICKNOTE_HOST=0.0.0.0` 注释并重启；放行�
 
 ---
 
-<p align="center">Made with 🖤 · 本地优先的个人记录工具</p>
+<p align="center">Made with · 本地优先的个人记录工具</p>
