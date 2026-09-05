@@ -1,0 +1,20 @@
+{
+  "name": "quicknote-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "QuickNote backend: Express + built-in node:sqlite",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=23.4.0"
+  },
+  "dependencies": {
+    "adm-zip": "^0.6.0",
+    "express": "^5.2.1",
+    "multer": "^2.0.1",
+    "webdav": "^5.7.2"
+  }
+}

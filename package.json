@@ -1,0 +1,24 @@
+{
+  "name": "quicknote",
+  "version": "0.1.0",
+  "private": true,
+  "description": "QuickNote · 快记 —— 单机本地运行的 Web 快速笔记应用（Vue3 + Node/Express + SQLite）",
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,web -c blue,green \"npm run dev -w server\" \"npm run dev -w web\"",
+    "build": "npm run build -w web",
+    "start": "node server/src/index.js",
+    "install:all": "npm install",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "playwright": "^1.49.1"
+  },
+  "engines": {
+    "node": ">=23.4.0"
+  }
+}

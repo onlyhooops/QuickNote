@@ -1,0 +1,40 @@
+# QuickNote systemd 服务单元
+# 使用方法：
+#   1. 将项目部署到 /opt/quicknote（npm install 需在项目根目录执行一次）
+#   2. 构建前端：npm run build
+#   3. 将本文件复制为 /etc/systemd/system/quicknote.service
+#   4. systemctl daemon-reload && systemctl enable --now quicknote
+#
+# 说明：
+#   - 服务仅监听 127.0.0.1（可用 Environment 修改 QUICKNOTE_HOST/PORT）
+#   - 数据默认存于 <项目>/server/data，建议用 QUICKNOTE_DATA 指到独立数据目录
+#   - 日志输出到 journald：journalctl -u quicknote -f
+
+[Unit]
+Description=QuickNote - local web note-taking app
+After=network.target
+
+[Service]
+Type=simple
+User=quicknote
+Group=quicknote
+WorkingDirectory=/opt/quicknote
+ExecStart=/usr/bin/node /opt/quicknote/server/src/index.js
+Restart=always
+RestartSec=3
+
+# 可选环境变量
+Environment=QUICKNOTE_HOST=127.0.0.1
+Environment=QUICKNOTE_PORT=3987
+#Environment=QUICKNOTE_DATA=/var/lib/quicknote
+
+# ── 移动端局域网访问（无鉴权！仅限可信 WiFi，风险自知）──
+# 取消下面一行的注释即可让同一局域网内的手机/平板访问 http://<电脑IP>:3987
+# 记得放行防火墙端口 3987/tcp（firewalld / ufw 见 README）
+#Environment=QUICKNOTE_HOST=0.0.0.0
+
+# 安全加固（数据目录需允许写入）
+#ReadWritePaths=/opt/quicknote /var/lib/quicknote
+
+[Install]
+WantedBy=multi-user.target

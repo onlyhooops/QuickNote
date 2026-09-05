@@ -1,0 +1,12 @@
+# dependencies
+node_modules/
+
+# build output
+web/dist/
+
+# runtime data (SQLite DB, uploaded images, local backups, config)
+server/data/
+
+# os / editor
+.DS_Store
+*.log
