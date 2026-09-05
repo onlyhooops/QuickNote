@@ -94,6 +94,38 @@ sudo QUICKNOTE_DIR=/opt/quicknote \
 
 ---
 
+## 🛠 常见问题（排障）
+
+**Q1 打开 `http://<服务器IP>:3987` 空白 / 连不上**
+- 服务默认只监听 `127.0.0.1`（仅本机）。**局域网访问需改为 `QUICKNOTE_HOST=0.0.0.0`**：
+  ```bash
+  # 方式一（推荐）：带环境变量重跑部署脚本（幂等）
+  sudo QUICKNOTE_HOST=0.0.0.0 bash deploy/install.sh
+  # 方式二：手动改 unit 并重启
+  sudo sed -i 's#^Environment=QUICKNOTE_HOST=.*#Environment=QUICKNOTE_HOST=0.0.0.0#' /etc/systemd/system/quicknote.service
+  sudo systemctl daemon-reload && sudo systemctl restart quicknote
+  ```
+- 确认在监听：`ss -ltnp | grep 3987`（应绑定 `0.0.0.0`）。
+- **容器/LXC**：改绑定后一般即可；**非容器**还需放行端口：`firewall-cmd --add-port=3987/tcp` 或 `ufw allow 3987`。
+
+**Q2 本机 `curl http://127.0.0.1:3987/` 返回 502**
+- 多为终端/容器设置了 **http 代理**，把 loopback 也转发给代理所致（**非应用故障**）。用 `--noproxy '*'` 复核：
+  ```bash
+  curl -s --noproxy '*' http://127.0.0.1:3987/api/health
+  ```
+  返回 `{"ok":true,...}` 即正常。
+
+**Q3 日志出现 `ExperimentalWarning: SQLite is an experimental feature`**
+- Node 内置 `node:sqlite` 的提示，功能正常，可忽略。
+
+**Q4 系统 `node -v` 版本较旧 / 提示需 ≥ 23.4**
+- 服务使用的是部署脚本自带的**便携 Node**（`.node/bin/node`，默认 `v24.4.0`），无需升级系统 Node；版本过低时脚本会自动下载现代 Node。
+
+**Q5 单机、无账号体系**
+- 应用无用户/权限体系；开放局域网后，同网任何能访问该端口者均可读写——请仅在可信网络使用。
+
+---
+
 ## 🚀 快速开始（macOS / Linux）
 
 ```bash
