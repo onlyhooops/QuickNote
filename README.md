@@ -43,7 +43,31 @@ npm run dev        # 后端(3987) + Vite(5173)
 
 浏览器打开 http://127.0.0.1:5173 （Vite 已代理 `/api` 与 `/images` 到后端）。
 
-## 🖥 生产部署（Linux 单进程）
+## 🖥 生产部署（Linux）
+
+### 方式一：通用一键脚本（推荐）
+
+```bash
+sudo bash deploy/install.sh
+```
+
+脚本会自动识别发行版/包管理器（Debian/Ubuntu·apt、Fedora/RHEL·dnf/yum、Arch·pacman、Alpine·apk、openSUSE·zypper，macOS·brew 自用）、安装系统依赖、**自带现代 Node(≥23.4，内置 node:sqlite)**、构建前端、创建运行用户与数据目录、生成并启用 systemd 服务。
+
+**可自定义所有路径**（用环境变量传给脚本，示例）：
+
+```bash
+sudo QUICKNOTE_DIR=/opt/quicknote \
+     QUICKNOTE_HOST=0.0.0.0 QUICKNOTE_PORT=3987 \
+     QUICKNOTE_DATA=/var/lib/quicknote \
+     QUICKNOTE_IMAGES_DIR=/data/qn/images \
+     QUICKNOTE_ATTACHMENTS_DIR=/data/qn/attachments \
+     QUICKNOTE_BACKUP_DIR=/data/qn/backups \
+     QUICKNOTE_USER=quicknote \
+     QUICKNOTE_NODE_VERSION=v24.4.0 \
+     bash deploy/install.sh
+```
+
+### 方式二：手动（可选）
 
 ```bash
 npm install
@@ -58,7 +82,10 @@ node server/src/index.js
 | --- | --- | --- |
 | `QUICKNOTE_HOST` | `127.0.0.1` | 监听地址（`0.0.0.0` = 开放局域网） |
 | `QUICKNOTE_PORT` | `3987` | 端口 |
-| `QUICKNOTE_DATA` | `<项目>/server/data` | 数据目录 |
+| `QUICKNOTE_DATA` | `<项目>/server/data` | 数据目录根 |
+| `QUICKNOTE_IMAGES_DIR` | `<DATA>/images` | 图片落盘目录 |
+| `QUICKNOTE_ATTACHMENTS_DIR` | `<DATA>/attachments` | 附件落盘目录 |
+| `QUICKNOTE_BACKUP_DIR` | `<DATA>/backups` | 本地备份目录 |
 
 ### 冒烟测试
 
@@ -107,7 +134,7 @@ systemd 里取消 `Environment=QUICKNOTE_HOST=0.0.0.0` 注释并重启；放行�
 │       ├── datecn.js       # 公历/农历/节日/节气 格式化
 │       └── rich.js         # 净化与统计（DOMPurify）
 ├── scripts/smoke.mjs  # Playwright 冒烟测试（桌面+移动）
-├── deploy/            # systemd 单元示例
+├── deploy/            # 通用一键部署脚本 install.sh + systemd 单元示例
 └── LICENSE            # MIT
 ```
 

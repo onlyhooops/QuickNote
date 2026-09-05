@@ -9,9 +9,10 @@ export const ROOT = path.resolve(__dirname, '..');
 
 /** 数据目录（DB / 图片 / 备份 / 配置），可用环境变量覆盖 */
 export const DATA_DIR = process.env.QUICKNOTE_DATA || path.join(ROOT, 'data');
-export const IMAGES_DIR = path.join(DATA_DIR, 'images');
-export const ATTACHMENTS_DIR = path.join(DATA_DIR, 'attachments');
-export const BACKUP_DIR = path.join(DATA_DIR, 'backups');
+// 图片 / 附件 / 备份目录可各自独立配置（便于挂载大容量盘）
+export const IMAGES_DIR = process.env.QUICKNOTE_IMAGES_DIR || path.join(DATA_DIR, 'images');
+export const ATTACHMENTS_DIR = process.env.QUICKNOTE_ATTACHMENTS_DIR || path.join(DATA_DIR, 'attachments');
+export const BACKUP_DIR = process.env.QUICKNOTE_BACKUP_DIR || path.join(DATA_DIR, 'backups');
 export const DB_FILE = path.join(DATA_DIR, 'quicknote.db');
 export const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
 

@@ -5,6 +5,7 @@ import { db } from '../db.js';
 import {
   DB_FILE,
   IMAGES_DIR,
+  ATTACHMENTS_DIR,
   BACKUP_DIR,
   loadConfig,
   saveConfig
@@ -33,6 +34,11 @@ export function buildSnapshotZip(stamp) {
     if (existsSync(IMAGES_DIR)) {
       for (const f of readdirSync(IMAGES_DIR)) {
         zip.addLocalFile(path.join(IMAGES_DIR, f), 'data/images');
+      }
+    }
+    if (existsSync(ATTACHMENTS_DIR)) {
+      for (const f of readdirSync(ATTACHMENTS_DIR)) {
+        zip.addLocalFile(path.join(ATTACHMENTS_DIR, f), 'data/attachments');
       }
     }
     return zip.toBuffer();
