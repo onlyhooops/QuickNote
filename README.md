@@ -141,6 +141,13 @@ systemd 里取消 `Environment=QUICKNOTE_HOST=0.0.0.0` 注释并重启；放行�
 - 更多平台嵌入（腾讯视频 / 网易云 / Spotify 等）
 - 法定节假日调休表、字体文件上传
 
+## 🤝 致谢
+
+本项目的设计与开发由以下协作完成：
+
+- **DeepSeek v4 Flash-Vision-Exp** —— 负责产品方案、前端视觉与交互迭代（含界面截图审校）、后端 API 与数据模型、自动化测试与部署脚本。
+- **DeepSeek Harness** —— 提供开发运行的 Agent 环境与工具链，支撑从需求澄清、研发治理到仓库托管（GitHub）的完整流程。
+
 ---
 
 <p align="center">本地优先的个人记录工具</p>
