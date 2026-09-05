@@ -34,6 +34,66 @@
 | --- | --- |
 | <img src="docs/screenshot-write.png" alt="录入" width="480" /> | <img src="docs/screenshot-timeline.png" alt="时间轴" width="480" /> |
 
+## 🚀 从拉取到使用（Linux 服务器）
+
+### 1️⃣ 获取源码（在服务器上）
+
+```bash
+# 方式 A：git 克隆（推荐；如服务器没有 git，deploy 脚本会自动安装）
+git clone https://github.com/onlyhooops/QuickNote.git /opt/quicknote
+cd /opt/quicknote
+
+# 方式 B：手动上传 —— 把仓库目录（含 server/、web/、deploy/、package.json 等）拷贝到服务器任意位置
+```
+
+### 2️⃣ 一键部署
+
+```bash
+sudo bash deploy/install.sh
+```
+
+脚本会自动：
+
+- **识别发行版/包管理器**：Debian/Ubuntu(apt)、Fedora/RHEL(dnf/yum)、Arch(pacman)、Alpine(apk)、openSUSE(zypper)、macOS(brew 本机)
+- 安装系统依赖（curl/tar/xz/ca-certificates），并**自带现代 Node(≥23.4，内置 node:sqlite)**，避免系统 Node 过旧
+- `npm install` + `npm run build`（产出前端静态包）
+- 创建运行用户与数据目录，生成并启用 **systemd 服务**，打印访问地址
+
+**自定义路径/端口/监听**（用环境变量传给脚本）：
+
+```bash
+sudo QUICKNOTE_DIR=/opt/quicknote \
+     QUICKNOTE_HOST=0.0.0.0 QUICKNOTE_PORT=3987 \
+     QUICKNOTE_DATA=/var/lib/quicknote \
+     QUICKNOTE_IMAGES_DIR=/data/qn/images \
+     QUICKNOTE_ATTACHMENTS_DIR=/data/qn/attachments \
+     QUICKNOTE_BACKUP_DIR=/data/qn/backups \
+     QUICKNOTE_USER=quicknote QUICKNOTE_NODE_VERSION=v24.4.0 \
+     bash deploy/install.sh
+```
+
+### 3️⃣ 访问与使用
+
+- 浏览器打开 `http://127.0.0.1:3987`（若绑定了 `0.0.0.0`，手机/平板同网访问 `http://<电脑IP>:3987`）
+- **录入**：首屏即编辑窗，所见即所得；⌘/Ctrl+Enter 或点「保存」化作时间点；输入自动存草稿
+- **时间轴**：中心线交替节点悬浮预览、点击全屏；**随览**随机拾取；**回响**看历史上的此刻（跨年度同月同日）
+- **嵌入**：粘贴 YouTube/Bilibili/Apple Music 链接自动变播放器，普通网页变链接卡
+- **标签**：编辑时点选，时间轴/侧栏筛选
+- **设置**：明暗主题、3 套字体方案、WebDAV 备份（单向 + 定时）与本地快照
+- **PWA**：手机浏览器「添加到主屏幕」全屏使用
+
+### 4️⃣ 日常运维
+
+| 操作 | 命令 |
+| --- | --- |
+| 看日志 | `journalctl -u quicknote -f` |
+| 重启服务 | `sudo systemctl restart quicknote` |
+| 开放局域网 | 编辑 `/etc/systemd/system/quicknote.service` 的 `QUICKNOTE_HOST=0.0.0.0` 后 `sudo systemctl restart quicknote`（并按需放行端口，firewalld/ufw） |
+| 升级 | `git pull && sudo bash deploy/install.sh`（脚本幂等，安全重跑） |
+| 数据位置 | 数据/图片/附件/备份均在可配置目录；备份 = 本地 zip + WebDAV 上传 |
+
+---
+
 ## 🚀 快速开始（macOS / Linux）
 
 ```bash
