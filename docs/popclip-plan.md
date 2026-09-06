@@ -1,6 +1,6 @@
 # PopClip 快速笔记 · 接入设计（计划，未落地）
 
-> 状态：**M1 已完成**（后端 `POST /api/quickin` 已实现并 curl 验收：正常/空文本 400/超长 400/令牌 403↔201/入库可检索）。M2 起待做。
+> 状态：**M1 已完成**（后端 `/api/quickin`：JSON 与表单、tags 数组/字符串、空/超长 400、令牌 403↔201、入库可检索）。**M2 已完成核心**：PopClip snippet（Shell+curl）已提供（`extensions/popclip/`），脚本逻辑本地实测 201 并入库；**待真机端到端验证**（macOS+PopClip 双击安装、选中文本点按）。M3 起待做。
 
 ## 一、调研结论：PopClip 扩展如何开发
 

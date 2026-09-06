@@ -1,8 +1,11 @@
+import express from 'express';
 import { Router } from 'express';
 import { loadConfig } from '../config.js';
 import { createNote, normalizeTags } from '../db.js';
 
 export const quickinRouter = Router();
+// 兼容 PopClip/curl 的表单提交（同时保留 JSON）
+quickinRouter.use(express.urlencoded({ extended: false }));
 
 const MAX_TEXT = 8000;
 const escHtml = (s) =>
@@ -47,7 +50,10 @@ quickinRouter.post('/', (req, res) => {
     return res.status(400).json({ ok: false, error: `文本超过 ${MAX_TEXT} 字符` });
   }
 
-  const tags = normalizeTags(req.body?.tags);
+  // tags 支持数组（JSON）或逗号分隔字符串（表单）
+  let tagRaw = req.body?.tags;
+  if (typeof tagRaw === 'string') tagRaw = tagRaw.split(',').map((t) => t.trim()).filter(Boolean);
+  const tags = normalizeTags(tagRaw);
   const source = String(req.body?.source || 'popclip').trim().slice(0, 24);
 
   const content = textToHtml(text);

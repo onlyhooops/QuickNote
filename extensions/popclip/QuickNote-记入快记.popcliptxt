@@ -1,0 +1,16 @@
+#popclip
+name: 记入快记
+icon: symbol:square.and.pencil
+requirements: [text]
+interpreter: bash
+shell script: |
+  code="$(printf '%s' "$POPCLIP_TEXT" | /usr/bin/curl -sS -o /dev/null -w '%{http_code}' -X POST "${POPCLIP_OPTION_BASEURL:-http://127.0.0.1:3987}/api/quickin" --data-urlencode "text@-" ${POPCLIP_OPTION_TAGS:+--data-urlencode "tags=$POPCLIP_OPTION_TAGS"})"
+  [ "$code" = "200" ] || [ "$code" = "201" ] || exit 1
+options:
+  - identifier: baseurl
+    type: string
+    label: 服务地址
+    default value: http://127.0.0.1:3987
+  - identifier: tags
+    type: string
+    label: 默认标签（逗号分隔，可留空）
