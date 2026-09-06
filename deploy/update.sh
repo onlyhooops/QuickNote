@@ -61,6 +61,59 @@ restart_service() {
   echo "✔ 已重启并通过健康检查（http://127.0.0.1:${PORT}/api/health）"
 }
 
+# 前端源码/入口是否比构建产物 web/dist 新（dist 缺失或落后 → 需要重新构建）
+web_build_needed() {
+  [ -d "$PROJECT_ROOT/web/dist" ] || return 0
+  local newest_src newest_dist
+  newest_src="$( { find "$PROJECT_ROOT/web/src" "$PROJECT_ROOT/web/public" -type f -printf '%T@\n' 2>/dev/null; \
+    stat -c '%Y' "$PROJECT_ROOT/web/index.html" "$PROJECT_ROOT/web/vite.config.js" 2>/dev/null; } | sort -nr | head -1 || true)"
+  newest_dist="$(find "$PROJECT_ROOT/web/dist" -type f -printf '%T@\n' 2>/dev/null | sort -nr | head -1 || true)"
+  [ -n "$newest_src" ] || return 1
+  [ -n "$newest_dist" ] || return 0
+  # 源码比产物新 1 秒以上即认为需要构建（避免同秒写入误判）
+  awk -v s="$newest_src" -v d="$newest_dist" 'BEGIN{ exit !(s > d + 1) }'
+}
+
+# 依赖清单是否比 node_modules 新（需要 npm install）
+deps_changed_since_build() {
+  [ -d "$PROJECT_ROOT/node_modules" ] || return 0
+  local lock newest
+  lock="$PROJECT_ROOT/node_modules/.package-lock.json"
+  [ -f "$lock" ] || return 0
+  newest="$( { stat -c '%Y' "$PROJECT_ROOT/package.json" "$PROJECT_ROOT/package-lock.json" \
+    "$PROJECT_ROOT/server/package.json" "$PROJECT_ROOT/web/package.json" 2>/dev/null; } | sort -nr | head -1 || true)"
+  [ -n "$newest" ] || return 1
+  awk -v n="$newest" -v l="$(stat -c '%Y' "$lock")" 'BEGIN{ exit !(n > l + 1) }'
+}
+
+# 准备 Node 工具链，并按 NEED_INSTALL / NEED_BUILD 执行安装与构建
+run_install_build() {
+  export PATH="$PROJECT_ROOT/.node/bin:$PATH"
+  local NODE_BIN
+  if [ -x "$PROJECT_ROOT/.node/bin/node" ]; then
+    NODE_BIN="$PROJECT_ROOT/.node/bin/node"
+  elif command -v node >/dev/null 2>&1; then
+    NODE_BIN="$(command -v node)"
+  else
+    echo "✗ 未找到 Node——请先运行 deploy/install.sh" >&2; exit 1
+  fi
+  if ! "$NODE_BIN" -p 'process.versions.node' 2>/dev/null | awk -F. '$1>23 || ($1==23 && $2>=4)' | grep -q .; then
+    echo "✗ Node 过旧（$("$NODE_BIN" -p process.versions.node)）需 >=23.4；请先运行 deploy/install.sh" >&2; exit 1
+  fi
+  if [ "$NEED_INSTALL" -eq 1 ]; then
+    echo "==> 依赖有变更，npm install ..."
+    npm install
+  else
+    echo "==> 依赖无变更，跳过 npm install"
+  fi
+  if [ "$NEED_BUILD" -eq 1 ]; then
+    echo "==> 前端产物落后于源码，npm run build ..."
+    npm run build
+  else
+    echo "==> 前端产物已是最新，无需构建"
+  fi
+}
+
 confirm() {
   [ "$YES" -eq 1 ] || {
     read -r -p "    $1 [y/N] " ans
@@ -87,14 +140,25 @@ echo "    差异：落后 $BEHIND / 领先 $AHEAD / 未提交 $([ "$DIRTY" -eq 1
 
 # ---------- 3. 已是最新？ ----------
 if [ "$BEHIND" -eq 0 ] && [ "$AHEAD" -eq 0 ] && [ "$DIRTY" -eq 0 ]; then
-  if service_stale; then
-    echo "✔ 代码已是最新，但服务进程早于当前代码（进程仍为旧版）——重启以应用。"
-    confirm "确认重启服务 $SERVICE 以应用当前代码？"
-    restart_service
-    echo "   当前代码：$(git log -1 --pretty='%h %s' HEAD)"
+  NEED_INSTALL=0; NEED_BUILD=0
+  if deps_changed_since_build; then NEED_INSTALL=1; fi
+  if web_build_needed; then NEED_BUILD=1; fi
+  if [ "$NEED_INSTALL" -eq 0 ] && [ "$NEED_BUILD" -eq 0 ] && ! service_stale; then
+    echo "✔ 已是最新（本地与远端一致，进程与代码一致），无需更新。"
     exit 0
   fi
-  echo "✔ 已是最新（本地与远端一致，进程与代码一致），无需更新。"
+  # 修复盲区：先 git pull、后跑本脚本时“代码已最新”，但 web/dist 与依赖常仍落后于源码——
+  # 此时仅重启不够，需按时间戳比对重新安装/构建后再重启。
+  if [ "$NEED_BUILD" -eq 1 ] || [ "$NEED_INSTALL" -eq 1 ]; then
+    echo "✔ 代码已是最新，但检测到需要安装/构建的变更（前端产物落后于源码）——构建后重启以应用。"
+    confirm "确认安装依赖并重新构建前端，然后重启服务 $SERVICE？"
+  else
+    echo "✔ 代码已是最新，但服务进程早于当前代码（进程仍为旧版）——重启以应用。"
+    confirm "确认重启服务 $SERVICE 以应用当前代码？"
+  fi
+  run_install_build
+  restart_service
+  echo "   当前代码：$(git log -1 --pretty='%h %s' HEAD)"
   exit 0
 fi
 
