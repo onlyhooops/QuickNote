@@ -160,6 +160,24 @@ sudo QUICKNOTE_DIR=/opt/quicknote \
      bash deploy/install.sh
 ```
 
+### 更新到新版本（智能脚本，推荐）
+
+```bash
+sudo bash deploy/update.sh          # 交互确认
+sudo bash deploy/update.sh --yes    # 免确认
+sudo bash deploy/update.sh --force  # 本地有未提交/领先时强制覆盖（谨慎）
+```
+
+脚本主流程（与 `install.sh` 分工：install=首次全量部署，update=增量更新，不触碰数据/用户/unit）：
+
+1. **检测运行与版本**：服务是否在跑 + 本地 git 版本；
+2. **拉取远端**并比对：落后/领先提交数、是否有未提交改动；
+3. 校验通过后**停止服务** → `git merge --ff-only` 更新源码；
+4. **按需** `npm install`（依赖变更时）与 `npm run build`（源码变更时），无变更自动跳过，更新快；
+5. 重启服务并**健康检查**，输出新版本与状态。
+
+环境变量（可选）：`QUICKNOTE_DIR`、`QUICKNOTE_BRANCH`、`QUICKNOTE_SERVICE`。
+
 ### 方式二：手动（可选）
 
 ```bash
@@ -227,7 +245,7 @@ systemd 里取消 `Environment=QUICKNOTE_HOST=0.0.0.0` 注释并重启；放行�
 │       ├── datecn.js       # 公历/农历/节日/节气 格式化
 │       └── rich.js         # 净化与统计（DOMPurify）
 ├── scripts/smoke.mjs  # Playwright 冒烟测试（桌面+移动）
-├── deploy/            # 通用一键部署脚本 install.sh + systemd 单元示例
+├── deploy/            # install.sh 首次部署 / update.sh 智能更新 + systemd 单元示例
 └── LICENSE            # MIT
 ```
 
