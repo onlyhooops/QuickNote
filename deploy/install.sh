@@ -13,12 +13,24 @@ set -euo pipefail
 # ---------- 可配置项（均可用环境变量覆盖） ----------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${QUICKNOTE_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-PORT="${QUICKNOTE_PORT:-3987}"
-HOST="${QUICKNOTE_HOST:-127.0.0.1}"
-DATA_DIR="${QUICKNOTE_DATA:-/var/lib/quicknote}"
-IMAGES_DIR="${QUICKNOTE_IMAGES_DIR:-$DATA_DIR/images}"
-ATTACHMENTS_DIR="${QUICKNOTE_ATTACHMENTS_DIR:-$DATA_DIR/attachments}"
-BACKUP_DIR="${QUICKNOTE_BACKUP_DIR:-$DATA_DIR/backups}"
+
+# 重跑 install.sh 时，若已存在 systemd unit，读取其已配置项作为“未显式传入时”的默认值，
+# 避免把用户自定义的监听地址/端口/数据目录改回默认（如局域网 HOST=0.0.0.0）
+UNIT="/etc/systemd/system/quicknote.service"
+if [ -f "$UNIT" ]; then
+  read_old() { sed -n "s/^Environment=QUICKNOTE_$1=//p" "$UNIT" 2>/dev/null | head -1; }
+else
+  read_old() { :; }
+fi
+PORT="${QUICKNOTE_PORT:-$(read_old PORT)}"; PORT="${PORT:-3987}"
+HOST="${QUICKNOTE_HOST:-$(read_old HOST)}"; HOST="${HOST:-127.0.0.1}"
+DATA_DIR="${QUICKNOTE_DATA:-$(read_old DATA)}"; DATA_DIR="${DATA_DIR:-/var/lib/quicknote}"
+IMAGES_DIR="${QUICKNOTE_IMAGES_DIR:-$(read_old IMAGES_DIR)}"
+ATTACHMENTS_DIR="${QUICKNOTE_ATTACHMENTS_DIR:-$(read_old ATTACHMENTS_DIR)}"
+BACKUP_DIR="${QUICKNOTE_BACKUP_DIR:-$(read_old BACKUP_DIR)}"
+IMAGES_DIR="${IMAGES_DIR:-$DATA_DIR/images}"
+ATTACHMENTS_DIR="${ATTACHMENTS_DIR:-$DATA_DIR/attachments}"
+BACKUP_DIR="${BACKUP_DIR:-$DATA_DIR/backups}"
 RUN_USER="${QUICKNOTE_USER:-quicknote}"
 NODE_VERSION="${QUICKNOTE_NODE_VERSION:-v24.4.0}"
 NODE_DIR="${QUICKNOTE_NODE_DIR:-$PROJECT_ROOT/.node}"
