@@ -23,12 +23,13 @@ const msg = ref(messages[0]);
 const todayHour = now.getHours();
 const near = (iso) => Math.abs(new Date(iso).getHours() - todayHour) <= 2;
 
-// 仅保留“同月同日”的记录，按年份分组（新在前）
+// 仅保留“往年同月同日”（历史上的今天/此刻）的记录：同年同日（今天新写的）不进回响
 const groups = computed(() => {
   const map = new Map();
   for (const n of notes.value) {
     const d = dateInfo(new Date(n.created_at));
     if (d.month !== nowInfo.month || d.day !== nowInfo.day) continue;
+    if (d.year >= nowInfo.year) continue; // 今年/今天的记录不属于“历史”
     if (!map.has(d.year)) map.set(d.year, []);
     map.get(d.year).push(n);
   }
@@ -60,7 +61,7 @@ watch(
     <div class="overlay-card">
       <div class="overlay-head">
         <span class="ttl">回响</span>
-        <span class="sub">{{ nowInfo.monthDay }} {{ nowInfo.weekday }} · 历史上的此刻</span>
+        <span class="sub">{{ nowInfo.monthDay }} {{ nowInfo.weekday }} · 历史上的今天</span>
         <span class="sp"></span>
         <button class="icon-btn" title="关闭" @click="emit('close')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
@@ -70,7 +71,7 @@ watch(
       <div class="overlay-body" style="padding-bottom: 34px">
         <div class="echo-hero">
           <div class="big">{{ nowInfo.monthDay }} · {{ nowInfo.weekday }}</div>
-          <div>跨年度 · 同月同日 {{ nowInfo.time }}</div>
+          <div>往年 · 同月同日 {{ nowInfo.time }}</div>
         </div>
 
         <div v-if="loading" class="tl-empty">翻找历史中的此刻…</div>

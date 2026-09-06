@@ -22,13 +22,13 @@
 - **粘贴 URL 自动嵌入**：YouTube / Bilibili / Apple Music → 内嵌播放器；普通网页 → Nothing 风链接卡（favicon + 标题/描述 + 缩略图 + 域名）
 - **图片 / 附件**：拖拽、粘贴、按钮上传；附件**任意格式、不限大小**
 - **AI 助手（可选）**：设置页启用并填入 DeepSeek Key 后，编辑器可一键「✨ AI 探索」——对<strong>纯文字</strong>做「溯源」与「扩展」；输出末尾自动附 AI 免责声明；审核后以「✨ AI 补全」区块插入、与原文排版区分（自动剔除图片/网页卡/音乐/视频卡片，不参与分析）。Key 仅存本机服务端，设置页可明文核对（仅本机/令牌可读回）
-- **随览 & 回响**：随机拾取一个时间点；回响展示**所有年份**「同月今日」时刻，按年份分组
+- **随览 & 回响**：随览随机拾取一个时间点；回响展示**往年**「同月同日 / 历史上的今天」时刻并按年份分组（当年/当天新写的记录不会进入回响）
 - **日期增强**：公历节日 / 农历日期与节日 / 节气（`lunar-javascript`）
 - **明暗主题**：浅色 / 深色 / 跟随系统；**3 套字体方案**（中英文成对）+ 实时预览
 - **标签与检索**：输入即默认入库，聚焦「＋标签」弹出<strong>曾用标签</strong>点选复用（无需重复手打），胶囊 ✕ 移除未使用的孤儿标签；时间轴/侧栏筛选；纯文本关键字检索
 - **备份**：单向 WebDAV（手动 + 定时），本地保留最近 5 份快照
 - **PopClip 快捷写入（macOS）**：选中文字一键「记入快记」；设置页可生成/复制/清除访问令牌，并**直接下载内置令牌与当前服务地址的 `QuickNote.popclipextz`** 安装即用
-- **设置**：含「说明」安全提示（网络 / AI Key / 个人开发者勿生产部署）与「关于」（项目背景、版本、编译时间、开发工具、AI 模型、仓库链接，附只读“检查更新”）
+- **设置**：外观与字体、「说明」安全提示（网络 / AI Key / 个人开发者勿生产部署）与「关于」（开发背景与声明、版本与运行信息、编译时间、协作开发工具、仓库链接、只读“检查更新”）
 - **本地 & PWA**：无账号、单机运行；移动端（顶条 + 底 Tab）与「添加到主屏幕」
 
 ## 🖼 截屏
@@ -79,7 +79,7 @@ sudo QUICKNOTE_DIR=/opt/quicknote \
 
 - 浏览器打开 `http://127.0.0.1:3987`（若绑定了 `0.0.0.0`，手机/平板同网访问 `http://<电脑IP>:3987`）
 - **录入**：首屏即编辑窗，所见即所得；⌘/Ctrl+Enter 或点「保存」化作时间点；输入自动存草稿
-- **时间轴**：中心线交替节点悬浮预览、点击全屏；**随览**随机拾取；**回响**看历史上的此刻（跨年度同月同日）
+- **时间轴**：中心线交替节点悬浮预览、点击时间点或文字条目全屏查看；**随览**随机拾取；**回响**看历史上的今天（往年同月同日的记录）
 - **嵌入**：粘贴 YouTube/Bilibili/Apple Music 链接自动变播放器，普通网页变链接卡
 - **标签**：编辑时点选，时间轴/侧栏筛选
 - **设置**：明暗主题、3 套字体方案、WebDAV 备份（单向 + 定时）与本地快照
@@ -92,7 +92,7 @@ sudo QUICKNOTE_DIR=/opt/quicknote \
 | 看日志 | `journalctl -u quicknote -f` |
 | 重启服务 | `sudo systemctl restart quicknote` |
 | 开放局域网 | 编辑 `/etc/systemd/system/quicknote.service` 的 `QUICKNOTE_HOST=0.0.0.0` 后 `sudo systemctl restart quicknote`（并按需放行端口，firewalld/ufw） |
-| 升级 | `git pull && sudo bash deploy/install.sh`（脚本幂等，安全重跑） |
+| 升级 | `git pull && sudo bash deploy/update.sh --yes`（推荐；仅首次部署用 `install.sh`） |
 | 数据位置 | 数据/图片/附件/备份均在可配置目录；备份 = 本地 zip + WebDAV 上传 |
 
 ---
@@ -165,6 +165,7 @@ sudo QUICKNOTE_DIR=/opt/quicknote \
 ### 更新到新版本（智能脚本，推荐）
 
 ```bash
+cd /opt/quicknote && git pull
 sudo bash deploy/update.sh          # 交互确认
 sudo bash deploy/update.sh --yes    # 免确认
 sudo bash deploy/update.sh --force  # 本地有未提交/领先时强制覆盖（谨慎）
@@ -174,9 +175,13 @@ sudo bash deploy/update.sh --force  # 本地有未提交/领先时强制覆盖�
 
 1. **检测运行与版本**：服务是否在跑 + 本地 git 版本；
 2. **拉取远端**并比对：落后/领先提交数、是否有未提交改动；
-3. 校验通过后**停止服务** → `git merge --ff-only` 更新源码；
-4. **按需** `npm install`（依赖变更时）与 `npm run build`（源码变更时），无变更自动跳过，更新快；
-5. 重启服务并**健康检查**，输出新版本与状态。
+3. 非最新则校验后**停止服务** → `git merge --ff-only` 更新源码 → 按需构建重启；
+4. 依赖变更时用 **`npm ci`**（严格按 `package-lock.json` 安装，**不会改写锁文件**，避免制造未提交改动）；
+5. 源码变更时 `npm run build`，无变更自动跳过；
+6. **代码已最新**时也会复查：若 `web/dist` 落后于源码（例如先 `git pull` 再跑本脚本）或进程仍是旧版，自动补构建并重启——杜绝“代码新、页面旧”；
+7. 重启后**健康检查**，输出新版本与状态。
+
+> 提示：本机被 `npm install` 回写过 `package-lock.json` 导致“未提交 有”时，先 `git checkout -- package-lock.json` 恢复即可。
 
 环境变量（可选）：`QUICKNOTE_DIR`、`QUICKNOTE_BRANCH`、`QUICKNOTE_SERVICE`。
 
@@ -235,17 +240,19 @@ systemd 里取消 `Environment=QUICKNOTE_HOST=0.0.0.0` 注释并重启；放行�
 │   └── src/
 │       ├── index.js        # 入口：API + 静态托管 + 定时备份调度
 │       ├── config.js       # 目录/端口/配置读写（server/data/config.json）
+│       ├── auth.js         # 敏感接口门控（本机回环 / QuickNote 令牌）
 │       ├── db.js           # node:sqlite；content(净化HTML)+plain(纯文本) 双列存储
-│       ├── routes/         # notes / tags / images / attachments / unfurl / backup
+│       ├── routes/         # notes / tags / images / attachments / unfurl / ai / quickin / backup / update
 │       └── backup/         # 本地快照 zip + WebDAV 上传
 ├── web/               # Vue 3 前端
 │   ├── public/             # PWA 图标 / manifest
 │   └── src/
 │       ├── views/          # WriteView(录入) / TimelineView(时间轴) / SettingsView(设置)
-│       ├── components/     # TipTapEditor / TimelineItem / MomentCard / FullNoteModal / 随览 / 回响
+│       ├── components/     # TipTapEditor / TagPicker / TimelineItem / MomentCard / FullNoteModal / AiExplore / RandomOverlay(随览) / LastYearOverlay(回响)
 │       ├── embed.js        # 链接→嵌入组件（YouTube/Bilibili/Apple/网页卡）
 │       ├── datecn.js       # 公历/农历/节日/节气 格式化
 │       └── rich.js         # 净化与统计（DOMPurify）
+├── extensions/popclip/ # PopClip 扩展（Config.yaml + 脚本 + .popclipextz 模板）
 ├── scripts/smoke.mjs  # Playwright 冒烟测试（桌面+移动）
 ├── deploy/            # install.sh 首次部署 / update.sh 智能更新 + systemd 单元示例
 └── LICENSE            # MIT
@@ -256,15 +263,28 @@ systemd 里取消 `Environment=QUICKNOTE_HOST=0.0.0.0` 注释并重启；放行�
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | GET | `/api/notes?q=&tag=&sort=&order=&from=&to=` | 列表（`q` 对纯文本检索；`from/to` 为 YYYY-MM-DD 按创建日过滤） |
-| POST | `/api/quickin` | 快捷写入（PopClip 等外部工具）：`{text, tags?, source?}` → 生成时间点；可选令牌头 `X-QuickNote-Token` |
 | POST | `/api/notes` | 新建 `{content: 净化 HTML, plain: 纯文本, tags[]}` |
 | GET/PUT/DELETE | `/api/notes/:id` | 单条记录（PUT 同 POST 载荷） |
-| GET | `/api/tags` | 标签与计数 |
+| GET | `/api/tags` | 标签与使用次数 |
+| POST | `/api/tags` | 新增标签（录入页“＋标签”输入即默认入库），返回 `{name, created}` |
+| DELETE | `/api/tags/:name` | 删除孤儿标签（未被任何笔记引用时才删除） |
 | POST | `/api/images` | 图片上传（字段 `file`），返回 `/images/xxx` |
 | POST | `/api/attachments` | 附件上传（任意格式、不限大小），返回 `{url,name,size}` |
 | GET | `/api/unfurl?url=` | 抓取网页 Open Graph 元信息（标题/描述/封面），供链接卡片 |
+| GET/PUT | `/api/ai/config` | AI 配置（Key 不回传，仅 `hasKey`） |
+| GET | `/api/ai/key` | 读回已存 API Key（仅本机/有效令牌，供设置页核对） |
+| POST | `/api/ai/test` | 测试 DeepSeek 连通性（可携带未保存的 `apiKey` 先行测试） |
+| POST | `/api/ai/explore` | 纯文本溯源/扩展（`{text}` → `{content, reasoning}`，免责声明恒置末尾） |
+| GET/PUT | `/api/quickin/config` | 快捷写入开关状态 |
+| GET/POST/DELETE | `/api/quickin/token` | 查看 / 生成轮换 / 清除访问令牌（生成与清除需本机或有效令牌） |
+| GET | `/api/quickin/extension` | 下载 `QuickNote.popclipextz`（按当前服务地址与令牌现场打包） |
+| POST | `/api/quickin` | 快捷写入（PopClip 等外部工具）：`{text, tags?, source?}`（也支持表单）；可选令牌头 `X-QuickNote-Token` |
 | GET/PUT | `/api/backup/config` | 备份配置 |
 | POST | `/api/backup/run` | 立即备份（本地 zip + WebDAV 上传） |
+| GET | `/api/update/meta` | 版本与运行信息（含各框架版本，供“关于”） |
+| GET | `/api/update/status` | 本地 git 版本与环境能力（不访问网络） |
+| POST | `/api/update/check` | 只读“检查更新”：`git fetch` 后比对本地/远端差异（不拉代码、不构建、不重启） |
+| GET | `/api/health` | 健康检查 |
 
 ## 📄 许可
 
@@ -272,29 +292,32 @@ systemd 里取消 `Environment=QUICKNOTE_HOST=0.0.0.0` 注释并重启；放行�
 
 ## 🗺 开发计划
 
-**本期已完成**：所见即所得编辑器、图形化时间轴、随览/回响、嵌入组件（YouTube/Bilibili/Apple Music + 网页链接卡）、图片/附件上传、明暗主题与字体方案、WebDAV 备份。
+**已完成（含本期优化）**：
+
+- 核心链路：所见即所得编辑器、图形化时间轴（时间点/文字均可点击打开）、随览、**回响（往年同月同日 / 历史上的今天）**
+- 富内容：YouTube/Bilibili/Apple Music 内嵌与网页链接卡、图片与附件上传（任意格式/大小）
+- 标签：新增即默认入库、曾用标签点选复用、孤儿标签清理
+- AI 助手（可选）：DeepSeek 接入（`/api/ai/*`），编辑器「✨ AI 探索」做**溯源与扩展**、免责声明置尾、Key 本机保存可核对
+- 草稿：输入即存，仅真正编辑且有内容才保存/恢复，同会话只提醒一次
+- PopClip 快捷写入（[docs/popclip-plan.md](docs/popclip-plan.md)）：M1 `/api/quickin` 接收（JSON/表单、可选令牌）→ M2 snippet → M3 `.popclipextz` 打包；设置页可生成/复制/清除令牌并下载内置令牌的插件包
+- 部署与运维：`install.sh` 全量部署 / `update.sh` 智能更新（npm ci + 按需构建、代码最新但产物落后时自动补构建重启、healthcheck）
+- 设置页：「说明」安全提示与免责声明、「关于」开发背景与版本/运行信息、只读“检查更新”
 
 **待办**：
 
-- 多图上传、孤儿图片/附件清理
-- **规划：记录导出（图片 / PDF）** —— 把单条或所选时间点导出为图片与 PDF 文稿，服务于分享与打印：
-  - **长图模式**：按时间点内容拼接成竖版长图（微信/相册友好）；
-  - **A4 文稿模式**：按 A4 分页、可设页边距/页眉页脚/字号，正文宽度与分页智能处理（避免图片/卡片/代码被截断，嵌入组件按需包含或折叠）；
-  - 拟实现：服务端无头渲染（如 Puppeteer/Playwright）或前端 `html2canvas + jsPDF`，先评估中/长图文混排与嵌入卡片的保真度。
-- **规划：PopClip 快速笔记** —— 接入 PopClip（macOS，https://www.popclip.app/dev/ ），实现「选中文本 → 「记入快记」→ 生成时间点」。**调研已完成**（详见 [docs/popclip-plan.md](docs/popclip-plan.md)）：PopClip JS 网络受 ATS 限制仅 https，本地 http 需走 Shell Script + curl；故扩展用 Shell 动作调本地 `POST /api/quickin`，后端预留本机校验/令牌：
-  - PopClip 扩展：Shell Script 动作，把选中文本（可含多段与换行）经 curl 发往本地服务；
-  - 快记侧：新增极简接收接口 `POST /api/quickin`（文本/可选标签/来源），校验仅本机来源（预留访问令牌），立即生成时间点并在本机轻提示；
-  - 依赖既有"纯文本录入 + 标签"能力，不触碰图片/卡片；计划拆分为 M1 后端接口 → M2 最小 snippet → M3 package 化。
+- 多图批量上传、孤儿图片/附件清理
 - 从备份恢复入口
-- 远端网页图片抓取到本地
+- **规划：记录导出（图片 / PDF）** —— 单条或所选时间点导出为长图（微信/相册友好）或 A4 文稿（分页/页边距/字号），拟评估无头渲染与 `html2canvas + jsPDF` 的图文混排保真度
+- 远端网页图片抓取到本地（当前仅存链接）
 - 更多平台嵌入（腾讯视频 / 网易云 / Spotify 等）
 - 法定节假日调休表、字体文件上传
+- 一键更新“执行”（设置页直接拉取/构建/重启）——可行性已论证，检测接口已就绪，按安全策略暂只提供只读检测
 
 ## 🤝 致谢
 
-本项目的设计与开发由以下协作完成：
+本项目的需求梳理、设计与开发由开发者结合自身使用需求完成，并借助以下 AI 协作完成编码、测试与文档：
 
-- **DeepSeek v4 Flash-Vision-Exp** —— 负责产品方案、前端视觉与交互迭代（含界面截图审校）、后端 API 与数据模型、自动化测试与部署脚本。
+- **DeepSeek（deepseek-v4-flash / deepseek-v4-pro）** —— 产品方案、前端视觉与交互迭代、后端 API 与数据模型、自动化测试与部署脚本。
 - **DeepSeek Harness** —— 提供开发运行的 Agent 环境与工具链，支撑从需求澄清、研发治理到仓库托管（GitHub）的完整流程。
 
 ---

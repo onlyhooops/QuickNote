@@ -1,4 +1,4 @@
-// QuickNote 冒烟测试：真实无头浏览器，覆盖新交互（录入→时间点→时间轴→全屏→随览/去年今时→主题）
+// QuickNote 冒烟测试：真实无头浏览器，覆盖新交互（录入→时间点→时间轴→全屏→随览/回响历史上的今天→主题）
 // 用法：node scripts/smoke.mjs [baseUrl]
 import { chromium } from 'playwright';
 import { execSync } from 'node:child_process';
@@ -109,11 +109,11 @@ async function watchErrors(page, label) {
   check('桌面：随览浮层出现且含内容', rnd.includes('爬山') || rnd.includes('日落'), rnd.slice(0, 50).replace(/\n/g, ' '));
   await page.locator('.overlay-head .icon-btn').click();
 
-  // 回响（历史上的此刻）
+  // 回响（往年同月同日 / 历史上的今天）
   await page.locator('.side .nav-item[data-ov="lastyear"]').click();
   await page.waitForSelector('.overlay-card', { timeout: 6000 });
   const ly = await page.locator('.overlay-card').innerText();
-  check('桌面：回响浮层（标题+今日记录）', ly.includes('回响') && (ly.includes('此刻') || ly.includes('·')), ly.slice(0, 60).replace(/\n/g, ' '));
+  check('桌面：回响浮层（标题）', ly.includes('回响') && (ly.includes('此刻') || ly.includes('·')), ly.slice(0, 60).replace(/\n/g, ' '));
   await page.locator('.overlay-head .icon-btn').click();
 
   // 主题切换
