@@ -53,3 +53,16 @@ export function contentStats(html) {
 export function htmlToPlain(html) {
   return contentStats(html).plain;
 }
+
+/** 提取"纯文字"用于 AI：剔除图片/嵌入卡/iframe 等非文本，仅留正文文字 */
+export function mediaFreePlain(html, limit = 8000) {
+  const div = document.createElement('div');
+  div.innerHTML = sanitizeHtml(html || '');
+  div.querySelectorAll('img, iframe, audio, video, div[data-embed]').forEach((n) => n.remove());
+  const t = (div.innerText || div.textContent || '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  return t.slice(0, limit);
+}

@@ -1143,6 +1143,15 @@ svg {
   padding: 9px 12px;
   font-size: 14px;
 }
+.field select {
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: var(--tx);
+  outline: none;
+}
 .field input:focus {
   border-color: var(--acc);
 }
@@ -1229,6 +1238,10 @@ svg {
   background: var(--line);
   margin: 0 4px;
   flex-shrink: 0;
+}
+.tt-btn.off {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 .tt-content {
   flex: 1;
@@ -1363,6 +1376,31 @@ svg {
   text-decoration: none;
   color: inherit;
 }
+/* AI 补全区块（原文 vs AI 补全排版区分；编辑态与查看态通用） */
+blockquote.ai-added {
+  background: var(--panel-2) !important;
+  border-left: 3px solid var(--acc);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--tx) !important;
+}
+blockquote.ai-added .ai-badge {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  color: var(--tx-3);
+  margin: 0 0 6px;
+}
+blockquote.ai-added p {
+  margin: 0.4em 0;
+}
+blockquote.ai-added > :first-child {
+  margin-top: 0;
+}
+blockquote.ai-added > :last-child {
+  margin-bottom: 0;
+}
+
 /* 小元素 */
 .nav-item .dotmini {
   width: 6px;

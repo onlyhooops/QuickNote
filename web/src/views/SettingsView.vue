@@ -34,6 +34,52 @@ const running = ref(false);
 const message = ref('');
 const result = ref('');
 
+// ---- AI 助手 ----
+const ai = reactive({ enabled: false, model: 'deepseek-chat', hasKey: false });
+const aiKey = ref('');
+const aiSaving = ref(false);
+const aiTesting = ref(false);
+const aiMsg = ref('');
+const aiErr = ref('');
+async function loadAi() {
+  try {
+    const c = await api.getAiConfig();
+    ai.enabled = !!c.enabled;
+    ai.model = c.model || 'deepseek-chat';
+    ai.hasKey = !!c.hasKey;
+  } catch {
+    /* ignore */
+  }
+}
+async function saveAi() {
+  aiSaving.value = true;
+  aiErr.value = '';
+  aiMsg.value = '';
+  try {
+    const r = await api.saveAiConfig({ enabled: ai.enabled, model: ai.model, apiKey: aiKey.value });
+    ai.hasKey = !!r?.hasKey || !!r?.apiKeySet || !!aiKey.value;
+    aiKey.value = '';
+    aiMsg.value = '已保存 ✓';
+  } catch (e) {
+    aiErr.value = '保存失败：' + e.message;
+  } finally {
+    aiSaving.value = false;
+  }
+}
+async function testAi() {
+  aiTesting.value = true;
+  aiErr.value = '';
+  aiMsg.value = '';
+  try {
+    await api.testAi();
+    aiMsg.value = '连接正常 ✓';
+  } catch (e) {
+    aiErr.value = '连接失败：' + e.message;
+  } finally {
+    aiTesting.value = false;
+  }
+}
+
 async function loadBackup() {
   try {
     const cfg = await api.getBackupConfig();
@@ -96,6 +142,7 @@ async function runNow() {
 
 onMounted(() => {
   loadBackup();
+  loadAi();
   window.addEventListener('themechange', () => (pref.value = getThemePref()));
 });
 </script>
@@ -147,6 +194,42 @@ onMounted(() => {
           <p class="pv-en">The quick brown fox · 快记 QuickNote · 01:27</p>
           <p class="pv-meta">第 12 个时间点 · 农历七月廿四 · 1234567890</p>
         </div>
+      </div>
+    </div>
+
+    <div class="set-section">
+      <h3 class="set-title">AI 助手</h3>
+      <div class="set-card">
+        <p style="margin: 0 0 8px; font-size: 13px; color: var(--tx-2)">
+          可选功能：在记录编辑器点「✨ AI 探索」，对<strong>纯文字部分</strong>做出处研判与内容补全
+          （不含图片/网页卡/音乐/视频卡片）。Key 仅存本机服务端，不会外传。
+        </p>
+        <label class="switch-row">
+          <input v-model="ai.enabled" type="checkbox" />
+          <span>启用 AI 助手</span>
+        </label>
+        <div class="field">
+          <label>模型</label>
+          <select v-model="ai.model" class="ai-select">
+            <option value="deepseek-chat">deepseek-chat（快 · 通用对话）</option>
+            <option value="deepseek-reasoner">deepseek-reasoner（慢 · 含推理）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>DeepSeek API Key（{{ ai.hasKey ? '已配置，留空保持不变' : '未配置' }}）</label>
+          <input v-model="aiKey" type="password" autocomplete="new-password" placeholder="sk-…（deepseek 官方平台获取）" />
+        </div>
+        <div class="set-actions">
+          <button class="btn primary" :disabled="aiSaving" @click="saveAi">
+            {{ aiSaving ? '保存中…' : '保存 AI 设置' }}
+          </button>
+          <button class="btn" :disabled="aiTesting || !ai.hasKey" @click="testAi">
+            {{ aiTesting ? '测试中…' : '测试连接' }}
+          </button>
+          <span v-if="aiMsg" style="color: var(--ok); font-size: 13px">{{ aiMsg }}</span>
+          <span v-if="aiErr" style="color: var(--danger); font-size: 13px">{{ aiErr }}</span>
+        </div>
+        <p class="row-tip">提示：AI 结果可能存在错误或幻觉，插入的内容带有「✨ AI 补全」标记便于与原文区分与核验。</p>
       </div>
     </div>
 

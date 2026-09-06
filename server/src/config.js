@@ -35,6 +35,12 @@ export const DEFAULT_CONFIG = {
     enabled: false,
     everyHours: 24,
     lastRunAt: null
+  },
+  ai: {
+    enabled: false,
+    apiKey: '',
+    model: 'deepseek-chat', // deepseek-chat | deepseek-reasoner
+    baseUrl: 'https://api.deepseek.com'
   }
 };
 

@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -7,10 +7,13 @@ import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
 import {
   Bold, Italic, Strikethrough, Heading2, Heading3,
-  List, ListOrdered, Quote, Link2, ImagePlus, Paperclip, Undo2, Redo2
+  List, ListOrdered, Quote, Link2, ImagePlus, Paperclip, Undo2, Redo2, Sparkles
 } from 'lucide-vue-next';
 import { api } from '../api.js';
 import { Embed, embedInfo } from '../embed.js';
+import { mediaFreePlain } from '../rich.js';
+import { buildAiBlockHtml } from '../ai.js';
+import AiExplore from './AiExplore.vue';
 
 // 扩展 Link：允许 download 属性，以便附件下载保留原始（含中文）文件名
 const DownloadLink = Link.extend({
@@ -28,6 +31,12 @@ const emit = defineEmits(['update:modelValue', 'save']);
 
 const imgInput = ref(null);
 const attInput = ref(null);
+
+// ---- AI 探索（可开关，需在设置中启用并配置 DeepSeek Key）----
+const aiReady = ref(false);
+const aiEnabled = ref(false);
+const aiOpen = ref(false);
+const aiText = computed(() => mediaFreePlain(props.modelValue));
 let suppress = false;
 let ready = false;
 let pending = null;
@@ -243,6 +252,27 @@ function toggleLink() {
   ed.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
 }
 
+onMounted(() => {
+  api
+    .getAiConfig()
+    .then((c) => (aiEnabled.value = !!c.enabled))
+    .catch(() => (aiEnabled.value = false))
+    .finally(() => (aiReady.value = true));
+});
+
+// 在文档末尾追加一个 HTML 块（AI 补全等）
+function appendBlock(html) {
+  const ed = editor.value;
+  if (!ed || !html) return;
+  const end = ed.state.doc.content.size;
+  ed.chain().focus(end).insertContent(html).run();
+  emit('update:modelValue', ed.getHTML());
+}
+function onAiInsert(text) {
+  appendBlock(buildAiBlockHtml(text));
+}
+defineExpose({ appendBlock });
+
 onBeforeUnmount(() => editor.value?.destroy());
 </script>
 
@@ -263,9 +293,24 @@ onBeforeUnmount(() => editor.value?.destroy());
           <component :is="b.icon" :size="17" :stroke-width="1.8" />
         </button>
       </template>
+
+      <!-- AI 探索（需在设置中启用并配置 DeepSeek Key） -->
+      <span v-if="aiReady && aiEnabled" class="tt-sep"></span>
+      <button
+        v-if="aiReady && aiEnabled"
+        class="tt-btn ai-btn"
+        :class="{ off: !aiText }"
+        :title="aiText ? 'AI 探索 · 出处研判与内容补全' : 'AI 探索（需先有文字内容）'"
+        type="button"
+        @mousedown.prevent
+        @click.prevent="aiText && (aiOpen = true)"
+      >
+        <Sparkles :size="17" :stroke-width="1.8" />
+      </button>
     </div>
     <EditorContent :editor="editor" class="tt-content" />
     <input ref="imgInput" type="file" accept="image/*" multiple hidden @change="onImagePick" />
     <input ref="attInput" type="file" hidden @change="onAttPick" />
+    <AiExplore :open="aiOpen" :text="aiText" @close="aiOpen = false" @insert="onAiInsert" />
   </div>
 </template>

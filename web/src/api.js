@@ -67,6 +67,19 @@ export const api = {
     const d = await res.json().catch(() => null);
     return (d && d.ok) ? d : { title: '', desc: '', thumb: '' };
   },
+  // AI 助手
+  getAiConfig() {
+    return request('GET', '/ai/config');
+  },
+  saveAiConfig(patch) {
+    return request('PUT', '/ai/config', patch);
+  },
+  testAi() {
+    return request('POST', '/ai/test');
+  },
+  aiExplore(text) {
+    return request('POST', '/ai/explore', { text });
+  },
   // 备份
   getBackupConfig() {
     return request('GET', '/backup/config');
