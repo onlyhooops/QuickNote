@@ -39,7 +39,8 @@ export const DEFAULT_CONFIG = {
   ai: {
     enabled: false,
     apiKey: '',
-    model: 'deepseek-chat', // deepseek-chat | deepseek-reasoner
+    model: 'deepseek-v4-flash', // deepseek-v4-flash | deepseek-v4-pro
+    effort: 'high', // 思考强度: low | high | max | off(关闭思考)
     baseUrl: 'https://api.deepseek.com'
   }
 };

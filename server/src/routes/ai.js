@@ -3,15 +3,27 @@ import { loadConfig, saveConfig } from '../config.js';
 
 export const aiRouter = Router();
 
+const MODELS = ['deepseek-v4-flash', 'deepseek-v4-pro', 'deepseek-v4-flash-vision-exp'];
+const EFFORTS = ['low', 'high', 'max', 'off'];
+
+const normModel = (m) => (MODELS.includes(m) ? m : 'deepseek-v4-flash');
+const normEffort = (e) => (EFFORTS.includes(e) ? e : 'high');
+
 const mask = () => {
   const ai = loadConfig().ai;
-  return { enabled: !!ai.enabled, model: ai.model, baseUrl: ai.baseUrl, hasKey: !!ai.apiKey };
+  return {
+    enabled: !!ai.enabled,
+    model: normModel(ai.model),
+    effort: normEffort(ai.effort),
+    baseUrl: ai.baseUrl,
+    hasKey: !!ai.apiKey
+  };
 };
 
-/** GET /api/ai/config —— 读取（Key 不回传，仅 hasKey） */
+/** GET /api/ai/config —— 读取（Key 不回传） */
 aiRouter.get('/config', (_req, res) => res.json(mask()));
 
-/** PUT /api/ai/config —— 保存；apiKey 为空表示不修改（保留原 Key） */
+/** PUT /api/ai/config —— 保存；apiKey 为空表示不修改 */
 aiRouter.put('/config', (req, res) => {
   const b = req.body ?? {};
   const old = loadConfig().ai;
@@ -20,44 +32,68 @@ aiRouter.put('/config', (req, res) => {
     ai: {
       enabled: !!b.enabled,
       apiKey,
-      model: b.model === 'deepseek-reasoner' ? 'deepseek-reasoner' : 'deepseek-chat',
+      model: normModel(b.model),
+      effort: normEffort(b.effort),
       baseUrl: (typeof b.baseUrl === 'string' && b.baseUrl.trim()) ? b.baseUrl.trim().replace(/\/+$/, '') : old.baseUrl
     }
   });
   res.json({ ...mask(), apiKeySet: !!next.ai.apiKey });
 });
 
-async function chat(cfg, messages, maxTokens = 2000) {
+/**
+ * 调用 DeepSeek Chat Completions（官方格式）：
+ * 模型 v4 系；思考模式默认开启；思考模式下不支持 temperature/top_p（勿传）。
+ * effort = off → thinking.disabled；否则 thinking.enabled + reasoning_effort。
+ */
+async function chat(cfg, messages, maxTokens) {
   const base = (cfg.baseUrl || 'https://api.deepseek.com').replace(/\/+$/, '');
+  const effort = normEffort(cfg.effort);
+  const body = {
+    model: normModel(cfg.model),
+    messages,
+    max_tokens: maxTokens,
+    thinking: { type: effort === 'off' ? 'disabled' : 'enabled' }
+  };
+  if (effort !== 'off') body.reasoning_effort = effort === 'high' ? 'high' : effort;
+
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 60000);
+  const timer = setTimeout(() => ctrl.abort(), 90000);
   try {
     const r = await fetch(`${base}/chat/completions`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${cfg.apiKey}`
-      },
-      body: JSON.stringify({ model: cfg.model, messages, max_tokens: maxTokens, temperature: 0.6 }),
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.apiKey}` },
+      body: JSON.stringify(body),
       signal: ctrl.signal
     });
-    const data = await r.json().catch(() => null);
-    if (!r.ok) {
-      throw new Error(data?.error?.message || `DeepSeek HTTP ${r.status}`);
+    const text = await r.text();
+    let data = null;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      /* not json */
     }
-    return data?.choices?.[0]?.message?.content || '';
+    if (!r.ok) {
+      throw new Error(data?.error?.message || data?.error || `DeepSeek HTTP ${r.status}`);
+    }
+    const msg = data?.choices?.[0]?.message;
+    const content = msg?.content || '';
+    const finish = data?.choices?.[0]?.finish_reason;
+    if (!content) {
+      throw new Error(finish ? `模型未返回内容（finish_reason=${finish}），请重试` : '模型未返回内容，请重试');
+    }
+    return { content, reasoning: msg?.reasoning_content || '' };
   } finally {
     clearTimeout(timer);
   }
 }
 
-/** POST /api/ai/test —— 校验 Key / 模型连通性 */
+/** POST /api/ai/test —— 校验 Key / 连通性 */
 aiRouter.post('/test', async (_req, res) => {
   const cfg = loadConfig().ai;
   if (!cfg.apiKey) return res.status(400).json({ ok: false, error: '未配置 API Key' });
   try {
-    const out = await chat(cfg, [{ role: 'user', content: 'ping' }], 5);
-    res.json({ ok: true, echo: (out || '').slice(0, 60) });
+    const out = await chat(cfg, [{ role: 'user', content: '你好' }], 16);
+    res.json({ ok: true, echo: out.content.slice(0, 60) });
   } catch (e) {
     res.status(502).json({ ok: false, error: String(e.message || e) });
   }
@@ -81,7 +117,7 @@ aiRouter.post('/explore', async (req, res) => {
       { role: 'system', content: SYSTEM },
       { role: 'user', content: text }
     ], 3000);
-    res.json({ ok: true, content: out });
+    res.json({ ok: true, content: out.content, reasoning: out.reasoning });
   } catch (e) {
     res.status(502).json({ ok: false, error: String(e.message || e) });
   }

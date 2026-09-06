@@ -35,7 +35,7 @@ const message = ref('');
 const result = ref('');
 
 // ---- AI 助手 ----
-const ai = reactive({ enabled: false, model: 'deepseek-chat', hasKey: false });
+const ai = reactive({ enabled: false, model: 'deepseek-v4-flash', effort: 'high', hasKey: false });
 const aiKey = ref('');
 const aiSaving = ref(false);
 const aiTesting = ref(false);
@@ -45,7 +45,8 @@ async function loadAi() {
   try {
     const c = await api.getAiConfig();
     ai.enabled = !!c.enabled;
-    ai.model = c.model || 'deepseek-chat';
+    ai.model = c.model || 'deepseek-v4-flash';
+    ai.effort = c.effort || 'high';
     ai.hasKey = !!c.hasKey;
   } catch {
     /* ignore */
@@ -56,7 +57,7 @@ async function saveAi() {
   aiErr.value = '';
   aiMsg.value = '';
   try {
-    const r = await api.saveAiConfig({ enabled: ai.enabled, model: ai.model, apiKey: aiKey.value });
+    const r = await api.saveAiConfig({ enabled: ai.enabled, model: ai.model, effort: ai.effort, apiKey: aiKey.value });
     ai.hasKey = !!r?.hasKey || !!r?.apiKeySet || !!aiKey.value;
     aiKey.value = '';
     aiMsg.value = '已保存 ✓';
@@ -211,8 +212,17 @@ onMounted(() => {
         <div class="field">
           <label>模型</label>
           <select v-model="ai.model" class="ai-select">
-            <option value="deepseek-chat">deepseek-chat（快 · 通用对话）</option>
-            <option value="deepseek-reasoner">deepseek-reasoner（慢 · 含推理）</option>
+            <option value="deepseek-v4-flash">deepseek-v4-flash（默认 · 快）</option>
+            <option value="deepseek-v4-pro">deepseek-v4-pro（更强）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>思考 / 推理强度</label>
+          <select v-model="ai.effort" class="ai-select">
+            <option value="high">高（默认，更准确）</option>
+            <option value="low">低（更快）</option>
+            <option value="max">最大</option>
+            <option value="off">关闭思考（最快）</option>
           </select>
         </div>
         <div class="field">
