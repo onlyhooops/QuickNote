@@ -51,7 +51,7 @@ function confirmInsert() {
     <div class="overlay-card" style="width: min(680px, 100%)">
       <div class="overlay-head">
         <Sparkles :size="16" :stroke-width="1.8" style="color: var(--acc)" />
-        <span class="ttl">AI 探索 · 出处与补全</span>
+        <span class="ttl">AI 探索 · 溯源与扩展</span>
         <span class="sp"></span>
         <button class="icon-btn" title="关闭" @click="emit('close')">
           <X :size="18" :stroke-width="1.8" />

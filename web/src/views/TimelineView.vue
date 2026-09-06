@@ -146,7 +146,7 @@ onBeforeUnmount(() => clearTimeout(qTimer));
     </div>
 
     <template v-else>
-      <p class="tl-stats">{{ notes.length }} 个时间点 · 悬停光点预览，点击进入全屏</p>
+      <p class="tl-stats">{{ notes.length }} 个时间点 · 点击时间点或文字即可查看</p>
       <div class="tl">
         <section v-for="g in groups" :key="g.key" class="tl-day">
           <header class="tl-day-head">

@@ -39,14 +39,22 @@ function onEnter(e) {
 </script>
 
 <template>
-  <article ref="root" class="tl-item" :class="[side, { visible }]">
+  <article
+    ref="root"
+    class="tl-item"
+    :class="[side, { visible }]"
+    tabindex="0"
+    role="button"
+    :aria-label="`${time} 的笔记，点击查看`"
+    @click="open"
+    @keydown.enter.prevent="open"
+    @keydown.space.prevent="open"
+  >
     <span
       class="tl-marker"
-      role="button"
-      tabindex="0"
-      :aria-label="`${time} 的笔记，点击查看`"
-      @click="open"
-      @keydown.enter.prevent="open"
+      role="presentation"
+      aria-hidden="true"
+      @click.stop="open"
       @mouseenter="onEnter"
       @focus="onEnter"
       @mouseleave="emit('leave')"

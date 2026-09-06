@@ -585,6 +585,69 @@ svg {
   gap: 6px;
   padding: 12px 16px 0;
 }
+.tag-pick {
+  position: relative;
+  min-width: 0;
+}
+.tag-pop {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 16px;
+  z-index: 60;
+  width: min(300px, 84vw);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  padding: 8px 10px 10px;
+  animation: tipIn 0.15s var(--ease);
+}
+.tag-pop-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--tx-3);
+  letter-spacing: 0.5px;
+  padding: 0 4px 6px;
+}
+.tag-pop-title .sp {
+  flex: 1;
+}
+.tag-pop-close {
+  border: 0;
+  background: none;
+  color: var(--tx-3);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.tag-pop-close:hover {
+  background: var(--line-soft);
+  color: var(--tx);
+}
+.tag-pop-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.tag-pop-item {
+  border: 1px solid var(--line-soft);
+  background: var(--panel-2);
+  color: var(--tx-2);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+.tag-pop-item:hover {
+  border-color: var(--acc);
+  color: var(--acc);
+}
 .tag-edit input {
   border: 1px dashed var(--line);
   border-radius: 999px;
@@ -748,6 +811,14 @@ svg {
 .tl-item.visible {
   opacity: 1;
   transform: none;
+}
+.tl-item {
+  cursor: pointer;
+}
+.tl-item:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+  border-radius: 12px;
 }
 .tl-marker {
   grid-column: 2;
@@ -1644,4 +1715,104 @@ blockquote.ai-added > :last-child {
   .full-note-bar {
     padding: 8px 10px;
   }
+}
+
+/* =====================================================================
+   设置页补充：AI Key 明文行 / 快捷写入 PopClip / 说明安全提示 / 关于
+   ===================================================================== */
+.key-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.key-row input {
+  flex: 1;
+  min-width: 0;
+}
+.key-row .icon-btn {
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+}
+.key-row .icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.about-notes {
+  font-size: 12.5px;
+  color: var(--tx-2);
+  line-height: 1.8;
+  border-top: 1px dashed var(--line);
+  padding-top: 8px;
+  margin-top: 10px;
+}
+.about-notes p {
+  margin: 10px 0 2px;
+  font-weight: 600;
+  color: var(--tx);
+}
+.about-notes ul {
+  margin: 0 0 2px;
+  padding-left: 18px;
+}
+.about-notes li {
+  margin: 3px 0;
+}
+.about-notes code,
+.about-update code {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+  background: var(--panel-2);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+
+.about-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+  margin-top: 6px;
+}
+.about-row {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+.about-row .k {
+  flex-shrink: 0;
+  width: 64px;
+  color: var(--tx-3);
+}
+.about-row .v {
+  color: var(--tx);
+  min-width: 0;
+  word-break: break-all;
+}
+.about-update {
+  margin-top: 14px;
+  border-top: 1px dashed var(--line);
+  padding-top: 12px;
+}
+.about-env {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.env-item {
+  font-size: 11.5px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  padding: 2px 10px;
+  color: var(--tx-2);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.env-item.bad,
+.env-item.warn {
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+  color: var(--danger);
 }

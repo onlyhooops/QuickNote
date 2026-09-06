@@ -171,6 +171,37 @@ export function listTags() {
     .map((r) => ({ name: r.name, count: Number(r.count) }));
 }
 
+/** 规范化单个标签名（空白折叠、去空、长度上限），非法返回空串 */
+export function normalizeTagName(raw) {
+  const name = String(raw ?? '').trim().replace(/\s+/g, ' ');
+  if (!name || name.length > 30) return '';
+  return name;
+}
+
+/** 确保标签存在于词汇表（无笔记引用时也保留，供「曾用标签」点选复用）；返回是否新建 */
+export function ensureTag(name) {
+  const clean = normalizeTagName(name);
+  if (!clean) return { name: '', created: false };
+  const old = db.prepare('SELECT id FROM tags WHERE name = ?').get(clean);
+  if (old) return { name: clean, created: false };
+  db.prepare('INSERT OR IGNORE INTO tags (name) VALUES (?)').run(clean);
+  return { name: clean, created: true };
+}
+
+/** 删除“未被任何笔记引用”的孤儿标签；被引用时返回 false（不删除） */
+export function deleteOrphanTag(name) {
+  const clean = normalizeTagName(name);
+  if (!clean) return false;
+  const info = db
+    .prepare(
+      `DELETE FROM tags WHERE name = ? AND NOT EXISTS (
+         SELECT 1 FROM note_tags nt WHERE nt.tag_id = tags.id
+       )`
+    )
+    .run(clean);
+  return info.changes > 0;
+}
+
 /** 由纯文本推导标题：取首个非空行，超长截断 */
 export function deriveTitle(plain) {
   const text = String(plain ?? '').trim();

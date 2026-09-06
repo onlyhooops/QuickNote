@@ -1,7 +1,7 @@
 const BASE = '/api';
 
-async function request(method, url, body) {
-  const opts = { method, headers: {} };
+async function request(method, url, body, headers = {}) {
+  const opts = { method, headers };
   if (body !== undefined) {
     opts.headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(body);
@@ -43,6 +43,12 @@ export const api = {
   listTags() {
     return request('GET', '/tags');
   },
+  ensureTag(name) {
+    return request('POST', '/tags', { name });
+  },
+  removeOrphanTag(name) {
+    return request('DELETE', '/tags/' + encodeURIComponent(name));
+  },
   // 图片
   async uploadImage(file) {
     const fd = new FormData();
@@ -74,11 +80,56 @@ export const api = {
   saveAiConfig(patch) {
     return request('PUT', '/ai/config', patch);
   },
-  testAi() {
-    return request('POST', '/ai/test');
+  getAiKey(headers = {}) {
+    return request('GET', '/ai/key', undefined, headers);
+  },
+  testAi(body) {
+    return request('POST', '/ai/test', body);
   },
   aiExplore(text) {
     return request('POST', '/ai/explore', { text });
+  },
+  // 快捷写入（PopClip）
+  getQuickinConfig() {
+    return request('GET', '/quickin/config');
+  },
+  saveQuickinConfig(patch) {
+    return request('PUT', '/quickin/config', patch);
+  },
+  getQuickinToken(headers = {}) {
+    return request('GET', '/quickin/token', undefined, headers);
+  },
+  rotateQuickinToken(headers = {}) {
+    return request('POST', '/quickin/token', undefined, headers);
+  },
+  clearQuickinToken(headers = {}) {
+    return request('DELETE', '/quickin/token', undefined, headers);
+  },
+  async downloadQuickinExtension(headers = {}) {
+    const res = await fetch(BASE + '/quickin/extension', { headers });
+    if (!res.ok) {
+      const d = await res.json().catch(() => null);
+      throw new Error(d?.error || `下载失败（${res.status}）`);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'QuickNote.popclipextz';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  },
+  // 版本 / 更新检查（只读）
+  getMeta() {
+    return request('GET', '/update/meta');
+  },
+  getUpdateStatus() {
+    return request('GET', '/update/status');
+  },
+  checkUpdate() {
+    return request('POST', '/update/check');
   },
   // 备份
   getBackupConfig() {

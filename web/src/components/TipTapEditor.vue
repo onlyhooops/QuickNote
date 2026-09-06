@@ -300,7 +300,7 @@ onBeforeUnmount(() => editor.value?.destroy());
         v-if="aiReady && aiEnabled"
         class="tt-btn ai-btn"
         :class="{ off: !aiText }"
-        :title="aiText ? 'AI 探索 · 出处研判与内容补全' : 'AI 探索（需先有文字内容）'"
+        :title="aiText ? 'AI 探索 · 溯源与扩展' : 'AI 探索（需先有文字内容）'"
         type="button"
         @mousedown.prevent
         @click.prevent="aiText && (aiOpen = true)"
