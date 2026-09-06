@@ -278,10 +278,10 @@ systemd 里取消 `Environment=QUICKNOTE_HOST=0.0.0.0` 注释并重启；放行�
   - **长图模式**：按时间点内容拼接成竖版长图（微信/相册友好）；
   - **A4 文稿模式**：按 A4 分页、可设页边距/页眉页脚/字号，正文宽度与分页智能处理（避免图片/卡片/代码被截断，嵌入组件按需包含或折叠）；
   - 拟实现：服务端无头渲染（如 Puppeteer/Playwright）或前端 `html2canvas + jsPDF`，先评估中/长图文混排与嵌入卡片的保真度。
-- **规划：PopClip 快速笔记** —— 接入 PopClip（macOS，https://www.popclip.app/dev/ ）生态，实现「任意应用选中文本 → 点 PopClip 动作「记入快记」→ 一键生成时间点」：
-  - PopClip 扩展：基于 PopClip 的 JS Bundle / URL 动作，把选中文本（可含多段与换行）发往本地服务；仅在装有本应用并开启服务时出现该动作；
+- **规划：PopClip 快速笔记** —— 接入 PopClip（macOS，https://www.popclip.app/dev/ ），实现「选中文本 → 「记入快记」→ 生成时间点」。**调研已完成**（详见 [docs/popclip-plan.md](docs/popclip-plan.md)）：PopClip JS 网络受 ATS 限制仅 https，本地 http 需走 Shell Script + curl；故扩展用 Shell 动作调本地 `POST /api/quickin`，后端预留本机校验/令牌：
+  - PopClip 扩展：Shell Script 动作，把选中文本（可含多段与换行）经 curl 发往本地服务；
   - 快记侧：新增极简接收接口 `POST /api/quickin`（文本/可选标签/来源），校验仅本机来源（预留访问令牌），立即生成时间点并在本机轻提示；
-  - 依赖既有"纯文本录入 + 标签"能力，不触碰图片/卡片；附 PopClip 扩展的安装与配置说明。
+  - 依赖既有"纯文本录入 + 标签"能力，不触碰图片/卡片；计划拆分为 M1 后端接口 → M2 最小 snippet → M3 package 化。
 - 从备份恢复入口
 - 远端网页图片抓取到本地
 - 更多平台嵌入（腾讯视频 / 网易云 / Spotify 等）
