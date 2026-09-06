@@ -12,6 +12,41 @@ const PROJECT_ROOT = path.resolve(ROOT, '..');
 const BRANCH = process.env.QUICKNOTE_BRANCH || 'main';
 const SERVICE = process.env.QUICKNOTE_SERVICE || 'quicknote';
 
+const stripVer = (v) => String(v ?? '').replace(/^[\^~=<> ]+/, '');
+
+/** 读取根/服务端/前端 package.json，汇总“版本与运行信息”（供设置 → 关于展示） */
+function collectVersions() {
+  const read = (p) => {
+    try {
+      return JSON.parse(readFileSync(p, 'utf8'));
+    } catch {
+      return null;
+    }
+  };
+  const rootPkg = read(path.join(PROJECT_ROOT, 'package.json')) || {};
+  const serverPkg = read(path.join(PROJECT_ROOT, 'server', 'package.json')) || {};
+  const webPkg = read(path.join(PROJECT_ROOT, 'web', 'package.json')) || {};
+  const dep = (p, name, isDev) =>
+    stripVer((isDev ? p.devDependencies : p.dependencies)?.[name]);
+  const platform =
+    process.platform === 'darwin' ? 'macOS' : process.platform === 'linux' ? 'Linux' : process.platform;
+  return {
+    node: process.version || '',
+    platform: `${platform} ${process.arch}`,
+    engines: rootPkg.engines?.node || '',
+    vue: dep(webPkg, 'vue'),
+    vite: dep(webPkg, 'vite', true),
+    tiptap: dep(webPkg, '@tiptap/vue-3'),
+    vueuse: dep(webPkg, '@vueuse/core'),
+    lucide: dep(webPkg, 'lucide-vue-next'),
+    dompurify: dep(webPkg, 'dompurify'),
+    lunar: dep(webPkg, 'lunar-javascript'),
+    express: dep(serverPkg, 'express'),
+    admzip: dep(serverPkg, 'adm-zip'),
+    webdav: dep(serverPkg, 'webdav')
+  };
+}
+
 function run(cmd, args, timeoutMs = 10000) {
   return new Promise((resolve) => {
     execFile(cmd, args, { cwd: PROJECT_ROOT, timeout: timeoutMs, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 }, (err, stdout, stderr) => {
@@ -62,6 +97,7 @@ updateRouter.get('/meta', async (_req, res) => {
     ok: true,
     app: name || 'quicknote',
     version,
+    versions: collectVersions(),
     git: info,
     capability: cap
   });

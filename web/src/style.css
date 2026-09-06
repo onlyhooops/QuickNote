@@ -1746,6 +1746,21 @@ blockquote.ai-added > :last-child {
   padding-top: 8px;
   margin-top: 10px;
 }
+.about-intro {
+  margin: 0 0 6px;
+  font-size: 13.5px;
+  color: var(--tx-2);
+  line-height: 1.8;
+}
+.about-decl {
+  margin-top: 10px;
+}
+.about-sub {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tx);
+}
 .about-notes p {
   margin: 10px 0 2px;
   font-weight: 600;

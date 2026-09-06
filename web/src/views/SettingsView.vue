@@ -5,7 +5,6 @@ import { applyTheme, getThemePref, setThemePref } from '../theme.js';
 import { SCHEMES, getScheme, setScheme } from '../font.js';
 import { Eye, EyeOff, Download, RefreshCw, Copy, Check } from 'lucide-vue-next';
 
-const APP_NAME = __APP_NAME__;
 const APP_VERSION = __APP_VERSION__;
 const BUILD_TIME = __BUILD_TIME__;
 const REPO_URL = 'https://github.com/onlyhooops/QuickNote';
@@ -319,6 +318,9 @@ const buildLabel = computed(() => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 });
 
+/** /api/update/meta 返回的运行库/框架版本（设置 → 关于 → 版本与运行信息） */
+const vf = computed(() => about.value?.versions || {});
+
 async function loadAbout() {
   try {
     const m = await api.getMeta();
@@ -619,20 +621,44 @@ onMounted(() => {
     <div class="set-section">
       <h3 class="set-title">关于</h3>
       <div class="set-card">
-        <p style="margin: 0 0 8px; font-size: 13.5px; color: var(--tx-2); line-height: 1.8">
-          {{ APP_NAME }} · 快记 QuickNote —— 单机本地优先的极简快速笔记：
-          打开即写、回车即存，每条记录化作时间线上的一个光点；支持富文本、图片、
-          链接卡片、音乐/视频嵌入、标签与时间轴、随览与去年今时。
-          前端 Vue 3 + Tiptap，后端 Node.js + Express + SQLite（<code>node:sqlite</code>），AI 接入 DeepSeek。
+        <p class="about-intro">
+          快记 QuickNote —— 一枚单机本地优先的极简快速笔记：打开即写、回车即存，
+          每条记录化作时间线上的一个光点；支持富文本、图片、链接卡片、音乐/视频嵌入、标签与检索，
+          以及随览、去年今时等回顾玩法，所有数据仅保存在本机。
         </p>
 
+        <div class="about-notes about-decl">
+          <p><strong>开发背景与声明</strong></p>
+          <ul>
+            <li><strong>项目缘起</strong>：本项目由开发者结合自身记录习惯与实际需求独立构思、设计与持续维护，属个人自用项目（非商业产品、非团队项目）。</li>
+            <li><strong>AI 辅助开发</strong>：在编码、联调、测试与文档整理等环节，大量借助了 DeepSeek 大模型与 DeepSeek Harness 自动化工具链辅助完成（详见下方「版本与运行信息 → 协作开发」）。</li>
+            <li><strong>质量与安全声明</strong>：鉴于项目以个人自用为目的，且相当一部分代码由 AI 辅助产出，作者<strong>无法对代码质量、稳定性与安全性作出任何明示或默示的保证</strong>；请仅在可信、非生产环境中使用并自行评估风险，重要数据请自行定期备份——由此产生的任何数据丢失或损失，作者不承担责任。</li>
+          </ul>
+        </div>
+
+        <p class="about-sub">版本与运行信息</p>
         <div class="about-rows">
-          <div class="about-row"><span class="k">版本</span><span class="v">v{{ APP_VERSION }}<template v-if="about?.git?.short"> · git {{ about.git.short }}（{{ fmtGitDate(about.git.date) }}）</template></span></div>
+          <div class="about-row">
+            <span class="k">版本</span>
+            <span class="v">v{{ APP_VERSION }}<template v-if="about?.git?.short"> · {{ about.git.short }}（{{ fmtGitDate(about.git.date) }}）</template></span>
+          </div>
           <div class="about-row"><span class="k">提交说明</span><span class="v">{{ about?.git?.subject || '—' }}</span></div>
           <div class="about-row"><span class="k">编译时间</span><span class="v">{{ buildLabel }}</span></div>
-          <div class="about-row"><span class="k">AI 模型</span><span class="v">{{ MODEL_LABEL[ai.model] || ai.model }}<template v-if="!ai.enabled">（未启用）</template> · 思考{{ EFFORT_LABEL[ai.effort] || ai.effort }}</span></div>
-          <div class="about-row"><span class="k">开发工具</span><span class="v">Vue 3 · Vite · Tiptap · Express · node:sqlite · DOMPurify · Lunar</span></div>
-          <div class="about-row"><span class="k">项目仓库</span><span class="v"><a :href="REPO_URL" target="_blank" rel="noopener">{{ REPO_URL }}</a></span></div>
+          <div class="about-row"><span class="k">运行环境</span><span class="v">Node {{ vf.node || '—' }} · {{ vf.platform || '—' }}</span></div>
+          <div class="about-row"><span class="k">前端框架</span><span class="v">Vue {{ vf.vue || '—' }} · Vite {{ vf.vite || '—' }} · Tiptap {{ vf.tiptap || '—' }}</span></div>
+          <div class="about-row"><span class="k">后端框架</span><span class="v">Express {{ vf.express || '—' }} · SQLite（node:sqlite）</span></div>
+          <div class="about-row">
+            <span class="k">AI 模型</span>
+            <span class="v">{{ MODEL_LABEL[ai.model] || ai.model }}（{{ ai.enabled ? '已启用' : '未启用' }}） · 思考{{ EFFORT_LABEL[ai.effort] || ai.effort }}</span>
+          </div>
+          <div class="about-row">
+            <span class="k">协作开发</span>
+            <span class="v">DeepSeek Harness 自动化工具链 · DeepSeek 大模型（deepseek-v4-flash / deepseek-v4-pro）辅助完成</span>
+          </div>
+          <div class="about-row">
+            <span class="k">项目仓库</span>
+            <span class="v"><a :href="REPO_URL" target="_blank" rel="noopener">{{ REPO_URL }}</a></span>
+          </div>
         </div>
 
         <div class="about-update">
