@@ -1,6 +1,6 @@
 # PopClip 快速笔记 · 接入设计（计划，未落地）
 
-> 状态：**M1 已完成**（后端 `/api/quickin`：JSON 与表单、tags 数组/字符串、空/超长 400、令牌 403↔201、入库可检索）。**M2 已完成核心**：PopClip snippet（Shell+curl）已提供（`extensions/popclip/`），脚本逻辑本地实测 201 并入库；**待真机端到端验证**（macOS+PopClip 双击安装、选中文本点按）。M3 起待做。
+> 状态：**M1 已完成**（后端 `/api/quickin`：JSON 与表单、tags 数组/字符串、空/超长 400、令牌 403↔201、入库可检索）。**M2/M3 已完成核心**：提供 snippet（`.popcliptxt`）与 **package**（`QuickNote.popclipext/` + `.popclipextz`，含图标、baseurl/tags/**secret 访问令牌**选项，脚本独立文件）；shell 逻辑实测：带令牌 201、无令牌 403 并红 X、入库带标签。**待真机端到端验证**（macOS+PopClip 双击安装、选中文本点按）。M4（发布到 PopClip 目录，需签名+shell rationale）可选。
 
 ## 一、调研结论：PopClip 扩展如何开发
 

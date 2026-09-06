@@ -1,0 +1,23 @@
+name: 记入快记
+identifier: com.quicknote.popclip
+icon: icon.png
+description: 把选中文本一键写入本机「快记」，生成时间点。
+keywords: quicknote 快记 notes 摘抄 记录
+macos version: "10.15"
+options:
+  - identifier: baseurl
+    type: string
+    label: 服务地址
+    default value: http://127.0.0.1:3987
+  - identifier: tags
+    type: string
+    label: 默认标签（逗号分隔）
+  - identifier: token
+    type: secret
+    label: 访问令牌（可选）
+    keychain: local
+actions:
+  - title: 记入快记
+    requirements: [text]
+    interpreter: bash
+    shell script file: quicknote.sh
