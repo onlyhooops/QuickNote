@@ -42,6 +42,10 @@ export const DEFAULT_CONFIG = {
     model: 'deepseek-v4-flash', // deepseek-v4-flash | deepseek-v4-pro
     effort: 'high', // 思考强度: low | high | max | off(关闭思考)
     baseUrl: 'https://api.deepseek.com'
+  },
+  quickin: {
+    enabled: true,
+    token: '' // 可选：非空时要求请求头 X-QuickNote-Token 匹配（开放局域网时建议设置）
   }
 };
 

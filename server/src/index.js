@@ -9,6 +9,7 @@ import { imagesRouter, imagesErrorHandler } from './routes/images.js';
 import { attachmentsRouter } from './routes/attachments.js';
 import { unfurlRouter } from './routes/unfurl.js';
 import { aiRouter } from './routes/ai.js';
+import { quickinRouter } from './routes/quickin.js';
 import { backupRouter } from './routes/backup.js';
 import { runBackup } from './backup/runner.js';
 
@@ -25,6 +26,7 @@ app.use('/api/images', imagesRouter);
 app.use('/api/attachments', attachmentsRouter);
 app.use('/api/unfurl', unfurlRouter);
 app.use('/api/ai', aiRouter);
+app.use('/api/quickin', quickinRouter);
 app.use('/api/backup', backupRouter);
 app.use('/images', express.static(IMAGES_DIR, { maxAge: '30d' }));
 app.use('/attachments', express.static(ATTACHMENTS_DIR));

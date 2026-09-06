@@ -254,6 +254,7 @@ systemd 里取消 `Environment=QUICKNOTE_HOST=0.0.0.0` 注释并重启；放行�
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | GET | `/api/notes?q=&tag=&sort=&order=&from=&to=` | 列表（`q` 对纯文本检索；`from/to` 为 YYYY-MM-DD 按创建日过滤） |
+| POST | `/api/quickin` | 快捷写入（PopClip 等外部工具）：`{text, tags?, source?}` → 生成时间点；可选令牌头 `X-QuickNote-Token` |
 | POST | `/api/notes` | 新建 `{content: 净化 HTML, plain: 纯文本, tags[]}` |
 | GET/PUT/DELETE | `/api/notes/:id` | 单条记录（PUT 同 POST 载荷） |
 | GET | `/api/tags` | 标签与计数 |
