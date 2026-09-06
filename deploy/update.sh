@@ -74,7 +74,7 @@ web_build_needed() {
   awk -v s="$newest_src" -v d="$newest_dist" 'BEGIN{ exit !(s > d + 1) }'
 }
 
-# 依赖清单是否比 node_modules 新（需要 npm install）
+# 依赖清单是否比 node_modules 新（需要 npm ci）
 deps_changed_since_build() {
   [ -d "$PROJECT_ROOT/node_modules" ] || return 0
   local lock newest
@@ -101,10 +101,10 @@ run_install_build() {
     echo "✗ Node 过旧（$("$NODE_BIN" -p process.versions.node)）需 >=23.4；请先运行 deploy/install.sh" >&2; exit 1
   fi
   if [ "$NEED_INSTALL" -eq 1 ]; then
-    echo "==> 依赖有变更，npm install ..."
-    npm install
+    echo "==> 依赖有变更，npm ci（严格按 package-lock.json 安装，不改写锁文件）..."
+    npm ci
   else
-    echo "==> 依赖无变更，跳过 npm install"
+    echo "==> 依赖无变更，跳过 npm ci"
   fi
   if [ "$NEED_BUILD" -eq 1 ]; then
     echo "==> 前端产物落后于源码，npm run build ..."
@@ -203,9 +203,9 @@ if ! "$NODE_BIN" -p 'process.versions.node' 2>/dev/null | awk -F. '$1>23 || ($1=
 fi
 
 if [ "$NEED_INSTALL" -eq 1 ]; then
-  echo "==> [4/6] 依赖有变更，npm install ..."; npm install
+  echo "==> [4/6] 依赖有变更，npm ci（严格按 package-lock.json 安装，不改写锁文件）..."; npm ci
 else
-  echo "==> [4/6] 依赖无变更，跳过 npm install"
+  echo "==> [4/6] 依赖无变更，跳过 npm ci"
 fi
 if [ "$NEED_BUILD" -eq 1 ]; then
   echo "==> [5/6] 源码有变更，npm run build ..."; npm run build
