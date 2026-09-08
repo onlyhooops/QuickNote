@@ -7,7 +7,8 @@ const escHtml = (s) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
-/** 把 AI 返回的纯文本包成"AI 补全"区块（独立引用样式 + 标签），与原文档区分 */
+/** 把 AI 返回的纯文本包成"AI 补全"区块（独立引用样式），原文档区分；
+ * 免责声明作为区块**末尾落款**（不再放在头部）。 */
 export function buildAiBlockHtml(text) {
   const lines = String(text || '')
     .split(/\r?\n/)
@@ -21,8 +22,8 @@ export function buildAiBlockHtml(text) {
   return (
     `<hr>` +
     `<blockquote class="ai-added">` +
-    `<p class="ai-badge">✨ AI 补全 · 由 DeepSeek 生成，可能存在错误，请核验</p>` +
     paras +
+    `<p class="ai-badge">✨ AI 补全 · 由 DeepSeek 生成，可能存在错误，请核验</p>` +
     `</blockquote>`
   );
 }

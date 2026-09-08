@@ -114,17 +114,13 @@ aiRouter.post('/test', async (req, res) => {
   }
 });
 
-const DISCLAIMER =
-  '以上内容由 AI 生成，可能存在错误或偏差，仅供核验与参考，请结合原文自行判断；本工具不对 AI 输出承担任何责任。';
-
 const SYSTEM =
   '你是「溯源与扩展」助手。用户会给你一段纯文本记录，请做两件事并严格按以下小节输出：\n' +
   '「溯源」尽力判断文本是否为引用/名句/歌词/诗文/影视对白等，给出最可能的出处（作品名/作者/平台）。无法确认为原创或不易检索时，明确写“未能识别明确出处（可能是个人创作或难以检索的片段）”，并在存疑处标注“推测·待核实”。不要编造出处。\n' +
   '「扩展」给出有质量的延展：补充背景/释义/关联内容，或续写几句。语言风格与原文一致，简洁不冗余。\n' +
-  '只输出这两个小节（小节标题使用「溯源」「扩展」）；正文结束后，另起一行把下面这行免责声明原文附在最后：\n' +
-  DISCLAIMER;
+  '只输出这两个小节（小节标题使用「溯源」「扩展」），不要附加免责声明或其他说明文字。';
 
-/** POST /api/ai/explore —— 传入纯文本，返回溯源与扩展建议；免责声明恒置于文本末尾 */
+/** POST /api/ai/explore —— 传入纯文本，返回溯源与扩展建议（免责声明由前端补全区块末尾落款承担） */
 aiRouter.post('/explore', async (req, res) => {
   const cfg = loadConfig().ai;
   if (!cfg.enabled) return res.status(400).json({ ok: false, error: 'AI 助手未启用（请在设置中开启）' });
@@ -136,10 +132,7 @@ aiRouter.post('/explore', async (req, res) => {
       { role: 'system', content: SYSTEM },
       { role: 'user', content: text }
     ], 3000);
-    let content = out.content || '';
-    // 兜底：若模型未按要求带上免责声明，由服务端补在末尾，保证“免责声明恒在文本末尾”
-    if (content && !content.includes('免责声明')) content = `${content.replace(/\s+$/, '')}\n\n${DISCLAIMER}`;
-    res.json({ ok: true, content, reasoning: out.reasoning });
+    res.json({ ok: true, content: out.content || '', reasoning: out.reasoning });
   } catch (e) {
     res.status(502).json({ ok: false, error: String(e.message || e) });
   }

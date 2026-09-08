@@ -23,15 +23,48 @@ const escHtml = (s) =>
 
 const genToken = () => randomBytes(24).toString('base64url'); // 32 字符
 
-/** 纯文本 → 行级 <p> 的 HTML（净化，防注入） */
-function textToHtml(text) {
+/** 校验来源 URL：仅接受干净的 http(s) 绝对地址，其余一律视为无来源 */
+function cleanSourceUrl(raw) {
+  const u = String(raw ?? '').trim();
+  if (u.length > 2048) return '';
+  if (!/^https?:\/\//i.test(u)) return '';
+  if (/[\s<>"']/.test(u)) return ''; // 拒绝空白/引号/尖括号等注入形态
+  try {
+    const parsed = new URL(u);
+    if (!parsed.hostname) return '';
+    return u;
+  } catch {
+    return '';
+  }
+}
+
+/** 由 URL 生成简洁来源名：优先调用方传入的网页标题，其次域名 */
+function sourceLabel(url, titleRaw) {
+  const title = String(titleRaw ?? '').replace(/\s+/g, ' ').trim().slice(0, 160);
+  if (title) return title;
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+}
+
+/** 纯文本 → 行级 <p> 的 HTML（净化，防注入）；带来源时在末尾追加来源超链接 */
+function textToHtml(text, sourceUrl = '', sourceTitle = '') {
   const lines = String(text)
     .split(/\r?\n/)
     .map((l) => l.replace(/\s+$/g, ''));
   while (lines.length && lines[0] === '') lines.shift();
   while (lines.length && lines[lines.length - 1] === '') lines.pop();
   const body = lines.map((l) => (l ? `<p>${escHtml(l)}</p>` : '<p><br></p>')).join('');
-  return `<div>${body}</div>`;
+  let tail = '';
+  const url = cleanSourceUrl(sourceUrl);
+  if (url) {
+    const label = escHtml(sourceLabel(url, sourceTitle));
+    const href = escHtml(url);
+    tail = `<p class="qn-src"><a href="${href}" target="_blank" rel="noopener noreferrer">来源 · ${label}</a></p>`;
+  }
+  return `<div>${body}${tail}</div>`;
 }
 
 /** 当前 quickin 对外可见状态（令牌本身不回传） */
@@ -170,13 +203,17 @@ quickinRouter.post('/', (req, res) => {
   if (typeof tagRaw === 'string') tagRaw = tagRaw.split(',').map((t) => t.trim()).filter(Boolean);
   const tags = normalizeTags(tagRaw);
   const source = String(req.body?.source || 'popclip').trim().slice(0, 24);
+  // 来源超链接（仅当内容确实来自网页时由调用方传入 url；非网页来源不标记）
+  const url = String(req.body?.url || '').trim();
+  const title = String(req.body?.title || '').trim();
 
-  const content = textToHtml(text);
+  const content = textToHtml(text, url, title);
   const note = createNote(content, text, tags);
   res.status(201).json({
     ok: true,
     id: note.id,
     source,
+    hasSource: !!cleanSourceUrl(url),
     tags: note.tags,
     created_at: note.created_at
   });

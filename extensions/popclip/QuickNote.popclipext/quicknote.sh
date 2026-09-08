@@ -9,6 +9,17 @@ set -uo pipefail
 base="${POPCLIP_OPTION_BASEURL:-${BASE_BAKED:-http://127.0.0.1:3987}}"
 token="${POPCLIP_OPTION_TOKEN:-$TOKEN_BAKED}"
 curl_args=( -sS -o /dev/null -w '%{http_code}' -X POST "$base/api/quickin" --data-urlencode "text@-" )
+# 来源：仅当选中内容来自「支持的浏览器」网页时，PopClip 才提供
+# POPCLIP_BROWSER_URL/POPCLIP_BROWSER_TITLE（其余应用内摘抄为空 → 不标来源）。
+if [ -n "${POPCLIP_BROWSER_URL:-}" ]; then
+  case "$POPCLIP_BROWSER_URL" in
+    http://*|https://*)
+      curl_args+=( --data-urlencode "url=$POPCLIP_BROWSER_URL" )
+      if [ -n "${POPCLIP_BROWSER_TITLE:-}" ]; then
+        curl_args+=( --data-urlencode "title=$POPCLIP_BROWSER_TITLE" )
+      fi ;;
+  esac
+fi
 if [ -n "${POPCLIP_OPTION_TAGS:-}" ]; then
   curl_args+=( --data-urlencode "tags=$POPCLIP_OPTION_TAGS" )
 fi

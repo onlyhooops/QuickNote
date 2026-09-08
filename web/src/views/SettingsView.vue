@@ -496,6 +496,10 @@ onMounted(() => {
           令牌可防止局域网内他人向 <code>/api/quickin</code> 随意写入；
           <strong>下载插件会按当前服务地址与令牌现场打包</strong>，安装即用。
         </p>
+        <p class="row-tip" style="margin: 0 0 10px">
+          来源标注：从<strong>网页</strong>摘抄时（Safari/Chrome/Firefox/Edge 等受支持的浏览器），
+          记录末尾会自动生成「来源 · 网页标题」超链接；非网页（如应用内文本）无法定位来源，不会标注。
+        </p>
 
         <label class="switch-row">
           <input v-model="qi.enabled" type="checkbox" @change="toggleQi" />

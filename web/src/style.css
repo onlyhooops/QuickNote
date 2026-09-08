@@ -1460,7 +1460,8 @@ blockquote.ai-added .ai-badge {
   font-size: 11px;
   letter-spacing: 0.4px;
   color: var(--tx-3);
-  margin: 0 0 6px;
+  margin: 8px 0 0;
+  text-align: right; /* 落款样式：位于补全文案末尾 */
 }
 blockquote.ai-added p {
   margin: 0.4em 0;
@@ -1470,6 +1471,23 @@ blockquote.ai-added > :first-child {
 }
 blockquote.ai-added > :last-child {
   margin-bottom: 0;
+}
+
+/* 来源超链接行（PopClip 网页摘抄自动附加；查看态/编辑态通用） */
+.qn-src {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--tx-3);
+  text-align: right;
+}
+.qn-src a {
+  color: var(--acc);
+  text-decoration: none;
+  word-break: break-all;
+}
+.qn-src a:hover {
+  text-decoration: underline;
 }
 
 /* 小元素 */
