@@ -20,7 +20,7 @@ options:
     type: boolean
     label: 保留 Markdown 排版
     description: 关闭（推荐）：保留网页富文本排版（标题/列表/引用/代码块/表格）；开启：按 Markdown 语法解析（适合复制到的是 Markdown 源码）
-    default value: 0
+    default value: '0'
 actions:
   - title: 记入快记
     requirements: [text]
