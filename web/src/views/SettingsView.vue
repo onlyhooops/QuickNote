@@ -500,6 +500,11 @@ onMounted(() => {
           来源标注：从<strong>网页</strong>摘抄时（Safari/Chrome/Firefox/Edge 等受支持的浏览器），
           记录末尾会自动生成「来源 · 网页标题」超链接；非网页（如应用内文本）无法定位来源，不会标注。
         </p>
+        <p class="row-tip" style="margin: 0 0 10px">
+          排版保留：网页摘抄默认保留<strong>标题 / 列表 / 引用 / 代码块 / 表格</strong>等排版
+          （自动去掉图片、网页样式与脚本，安全净化后再入库）；若复制到的是 Markdown 源码，
+          可在 PopClip 扩展设置里开启「保留 Markdown 排版」。超长内容（HTML &gt; 200KB）会自动回退纯文本。
+        </p>
 
         <label class="switch-row">
           <input v-model="qi.enabled" type="checkbox" @change="toggleQi" />

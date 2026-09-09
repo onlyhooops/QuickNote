@@ -27,7 +27,7 @@
 - **明暗主题**：浅色 / 深色 / 跟随系统；**3 套字体方案**（中英文成对）+ 实时预览
 - **标签与检索**：输入即默认入库，聚焦「＋标签」弹出<strong>曾用标签</strong>点选复用（无需重复手打），胶囊 ✕ 移除未使用的孤儿标签；时间轴/侧栏筛选；纯文本关键字检索
 - **备份**：单向 WebDAV（手动 + 定时），本地保留最近 5 份快照
-- **PopClip 快捷写入（macOS）**：选中文字一键「记入快记」；**来自网页的摘抄自动附「来源」超链接**（仅支持的浏览器内有效，非网页摘抄不标注）；设置页可生成/复制/清除访问令牌，并**直接下载内置令牌与当前服务地址的 `QuickNote.popclipextz`** 安装即用
+- **PopClip 快捷写入（macOS）**：选中文字一键「记入快记」；**网页摘抄保留原排版**（标题/列表/引用/代码块/表格；自动去图片、网页样式与脚本，服务端白名单净化），并自动附「来源」超链接（仅支持的浏览器内有效，非网页摘抄不标注）；Markdown 源码可在扩展里开关解析；设置页可生成/复制/清除访问令牌，并**直接下载内置令牌与当前服务地址的 `QuickNote.popclipextz`** 安装即用
 - **设置**：外观与字体、「说明」安全提示（网络 / AI Key / 个人开发者勿生产部署）与「关于」（开发背景与声明、版本与运行信息、编译时间、协作开发工具、仓库链接、只读“检查更新”）
 - **本地 & PWA**：无账号、单机运行；移动端（顶条 + 底 Tab）与「添加到主屏幕」
 
@@ -228,8 +228,9 @@ systemd 里取消 `Environment=QUICKNOTE_HOST=0.0.0.0` 注释并重启；放行�
 
 | 层 | 技术 |
 | --- | --- |
-| 前端 | Vue 3 · Vite · Tiptap（所见即所得富文本）· Lucide 图标 · VueUse（滚动动画） |
+| 前端 | Vue 3 · Vite · Tiptap（所见即所得富文本，含表格）· Lucide 图标 · VueUse（滚动动画） |
 | 后端 | Node.js（≥ 23.4，推荐 24 LTS）· Express · 内置 `node:sqlite`（零原生编译依赖） |
+| 摘抄净化 | `sanitize-html`（服务端白名单净化）· `marked`（Markdown → HTML，GFM 表格/代码块） |
 | 日期 | `lunar-javascript`（公历/农历节日、节气） |
 | 存储 | SQLite 单文件 `server/data/quicknote.db`；图片 `server/data/images/`；附件 `server/data/attachments/` |
 
@@ -278,7 +279,7 @@ systemd 里取消 `Environment=QUICKNOTE_HOST=0.0.0.0` 注释并重启；放行�
 | GET/PUT | `/api/quickin/config` | 快捷写入开关状态 |
 | GET/POST/DELETE | `/api/quickin/token` | 查看 / 生成轮换 / 清除访问令牌（生成与清除需本机或有效令牌） |
 | GET | `/api/quickin/extension` | 下载 `QuickNote.popclipextz`（按当前服务地址与令牌现场打包） |
-| POST | `/api/quickin` | 快捷写入（PopClip 等外部工具）：`{text, tags?, source?}`（也支持表单）；`url`/`title` 提供网页来源时在记录末尾生成来源超链接；可选令牌头 `X-QuickNote-Token` |
+| POST | `/api/quickin` | 快捷写入（PopClip 等外部工具）：`{text, html?, markdown?, tags?, source?, url?, title?}`（也支持表单）；排版优先级 html → markdown → text，HTML ≤ 200KB / Markdown ≤ 100KB 超限自动回退；`url`/`title` 提供网页来源时在记录末尾生成来源超链接；可选令牌头 `X-QuickNote-Token` |
 | GET/PUT | `/api/backup/config` | 备份配置 |
 | POST | `/api/backup/run` | 立即备份（本地 zip + WebDAV 上传） |
 | GET | `/api/update/meta` | 版本与运行信息（含各框架版本，供“关于”） |
@@ -299,7 +300,7 @@ systemd 里取消 `Environment=QUICKNOTE_HOST=0.0.0.0` 注释并重启；放行�
 - 标签：新增即默认入库、曾用标签点选复用、孤儿标签清理
 - AI 助手（可选）：DeepSeek 接入（`/api/ai/*`），编辑器「✨ AI 探索」做**溯源与扩展**、Key 本机保存可核对；插入区块**行末免责落款**
 - 草稿：输入即存，仅真正编辑且有内容才保存/恢复，同会话只提醒一次
-- PopClip 快捷写入（[docs/popclip-plan.md](docs/popclip-plan.md)）：M1 `/api/quickin` 接收（JSON/表单、可选令牌、网页摘抄自动附来源超链接）→ M2 snippet → M3 `.popclipextz` 打包；设置页可生成/复制/清除令牌并下载内置令牌的插件包
+- PopClip 快捷写入（[docs/popclip-plan.md](docs/popclip-plan.md)）：M1 `/api/quickin` 接收（JSON/表单、可选令牌、网页摘抄自动附来源超链接）→ M2 snippet → M3 `.popclipextz` 打包 → **M4 排版保留**（`captureHtml` + 服务端 `sanitize-html` 白名单净化：保留标题/列表/引用/代码块/**表格**，去图片与网页样式；Markdown 源码开关；HTML ≤ 200KB / Markdown ≤ 100KB 超限回退）；设置页可生成/复制/清除令牌并下载内置令牌的插件包
 - 部署与运维：`install.sh` 全量部署 / `update.sh` 智能更新（npm ci + 按需构建、代码最新但产物落后时自动补构建重启、healthcheck）
 - 设置页：「说明」安全提示与免责声明、「关于」开发背景与版本/运行信息、只读“检查更新”
 
@@ -308,7 +309,7 @@ systemd 里取消 `Environment=QUICKNOTE_HOST=0.0.0.0` 注释并重启；放行�
 - 多图批量上传、孤儿图片/附件清理
 - 从备份恢复入口
 - **规划：记录导出（图片 / PDF）** —— 单条或所选时间点导出为长图（微信/相册友好）或 A4 文稿（分页/页边距/字号），拟评估无头渲染与 `html2canvas + jsPDF` 的图文混排保真度
-- 远端网页图片抓取到本地（当前仅存链接）
+- 远端网页图片抓取到本地（当前仅存链接；PopClip 网页摘抄按需求**有意不采集图片**）
 - 更多平台嵌入（腾讯视频 / 网易云 / Spotify 等）
 - 法定节假日调休表、字体文件上传
 - 一键更新“执行”（设置页直接拉取/构建/重启）——可行性已论证，检测接口已就绪，按安全策略暂只提供只读检测

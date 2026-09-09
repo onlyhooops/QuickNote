@@ -46,6 +46,7 @@ export function stripHtml(html) {
   const s = String(html ?? '')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/(p|div|h[1-6]|li|blockquote|pre|tr)>/gi, '\n')
+    .replace(/<\/(td|th)>/gi, '\t') // 表格单元格用制表符分隔，纯文本可读
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
@@ -53,8 +54,10 @@ export function stripHtml(html) {
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
-    .replace(/[ \t]+/g, ' ')
-    .replace(/\n\s*\n+/g, '\n')
+    .replace(/[ \t]*\t[ \t]*/g, '\t') // 制表符周边空白收敛（先于空格压缩）
+    .replace(/ {2,}/g, ' ') // 压缩连续空格，保留制表符与换行
+    .replace(/\n[ \t]*\n+/g, '\n')
+    .replace(/^\t+|\t+$/gm, '')
     .trim();
   return s;
 }

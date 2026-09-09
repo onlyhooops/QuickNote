@@ -5,67 +5,27 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import AdmZip from 'adm-zip';
 import { loadConfig, saveConfig, ROOT } from '../config.js';
-import { createNote, normalizeTags } from '../db.js';
+import { createNote, normalizeTags, stripHtml } from '../db.js';
 import { secretAllowed } from '../auth.js';
+import {
+  MAX_HTML,
+  MAX_MARKDOWN,
+  cleanSourceUrl,
+  hasVisibleContent,
+  markdownToHtml,
+  plainTextToHtml,
+  sanitizeCaptureHtml,
+  sourceTail
+} from '../html.js';
 
 export const quickinRouter = Router();
-// 兼容 PopClip/curl 的表单提交（同时保留 JSON）
-quickinRouter.use(express.urlencoded({ extended: false }));
+// 兼容 PopClip/curl 的表单提交（同时保留 JSON）；HTML 摘抄上限 200KB，需放宽默认 100KB
+quickinRouter.use(express.urlencoded({ extended: false, limit: '2mb' }));
 
 const MAX_TEXT = 8000;
 const EXT_DIR = path.resolve(ROOT, '..', 'extensions', 'popclip');
-const escHtml = (s) =>
-  String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 
 const genToken = () => randomBytes(24).toString('base64url'); // 32 字符
-
-/** 校验来源 URL：仅接受干净的 http(s) 绝对地址，其余一律视为无来源 */
-function cleanSourceUrl(raw) {
-  const u = String(raw ?? '').trim();
-  if (u.length > 2048) return '';
-  if (!/^https?:\/\//i.test(u)) return '';
-  if (/[\s<>"']/.test(u)) return ''; // 拒绝空白/引号/尖括号等注入形态
-  try {
-    const parsed = new URL(u);
-    if (!parsed.hostname) return '';
-    return u;
-  } catch {
-    return '';
-  }
-}
-
-/** 由 URL 生成简洁来源名：优先调用方传入的网页标题，其次域名 */
-function sourceLabel(url, titleRaw) {
-  const title = String(titleRaw ?? '').replace(/\s+/g, ' ').trim().slice(0, 160);
-  if (title) return title;
-  try {
-    return new URL(url).hostname.replace(/^www\./, '');
-  } catch {
-    return url;
-  }
-}
-
-/** 纯文本 → 行级 <p> 的 HTML（净化，防注入）；带来源时在末尾追加来源超链接 */
-function textToHtml(text, sourceUrl = '', sourceTitle = '') {
-  const lines = String(text)
-    .split(/\r?\n/)
-    .map((l) => l.replace(/\s+$/g, ''));
-  while (lines.length && lines[0] === '') lines.shift();
-  while (lines.length && lines[lines.length - 1] === '') lines.pop();
-  const body = lines.map((l) => (l ? `<p>${escHtml(l)}</p>` : '<p><br></p>')).join('');
-  let tail = '';
-  const url = cleanSourceUrl(sourceUrl);
-  if (url) {
-    const label = escHtml(sourceLabel(url, sourceTitle));
-    const href = escHtml(url);
-    tail = `<p class="qn-src"><a href="${href}" target="_blank" rel="noopener noreferrer">来源 · ${label}</a></p>`;
-  }
-  return `<div>${body}${tail}</div>`;
-}
 
 /** 当前 quickin 对外可见状态（令牌本身不回传） */
 const quickinMask = () => {
@@ -176,7 +136,9 @@ quickinRouter.get('/extension', (req, res) => {
 
 /**
  * POST /api/quickin —— 快捷写入（PopClip 等外部工具）
- * body: { text: string, tags?: string[], source?: string }
+ * body: { text: string, html?: string, markdown?: string, tags?: string[], source?: string, url?: string, title?: string }
+ * 排版优先级：html（网页富文本，含表格/代码块）→ markdown（Markdown 源码）→ text（纯文本兜底）
+ * 超限（HTML > 200KB / Markdown > 100KB）自动降级到下一档；全部不可用时按纯文本上限报错。
  * 校验：仅本机访问；若配置了 quickin.token，则要求请求头 X-QuickNote-Token 匹配。
  */
 quickinRouter.post('/', (req, res) => {
@@ -193,26 +155,60 @@ quickinRouter.post('/', (req, res) => {
 
   const raw = typeof req.body?.text === 'string' ? req.body.text : '';
   const text = raw.replace(/\r\n?/g, '\n').trim();
-  if (!text) return res.status(400).json({ ok: false, error: '文本不能为空' });
-  if (text.length > MAX_TEXT) {
-    return res.status(400).json({ ok: false, error: `文本超过 ${MAX_TEXT} 字符` });
+  const htmlRaw = typeof req.body?.html === 'string' ? req.body.html : '';
+  const mdRaw = typeof req.body?.markdown === 'string' ? req.body.markdown : '';
+  if (!text && !htmlRaw && !mdRaw) {
+    return res.status(400).json({ ok: false, error: '文本不能为空' });
   }
+
+  const url = String(req.body?.url || '').trim();
+  const title = String(req.body?.title || '').trim();
 
   // tags 支持数组（JSON）或逗号分隔字符串（表单）
   let tagRaw = req.body?.tags;
   if (typeof tagRaw === 'string') tagRaw = tagRaw.split(',').map((t) => t.trim()).filter(Boolean);
   const tags = normalizeTags(tagRaw);
   const source = String(req.body?.source || 'popclip').trim().slice(0, 24);
-  // 来源超链接（仅当内容确实来自网页时由调用方传入 url；非网页来源不标记）
-  const url = String(req.body?.url || '').trim();
-  const title = String(req.body?.title || '').trim();
 
-  const content = textToHtml(text, url, title);
-  const note = createNote(content, text, tags);
+  // ① 网页 HTML（保排版：标题/列表/引用/代码块/表格）
+  let content = '';
+  let format = 'text';
+  let plain = text;
+  if (htmlRaw && htmlRaw.length <= MAX_HTML) {
+    const safe = sanitizeCaptureHtml(htmlRaw, url);
+    if (hasVisibleContent(safe)) {
+      content = safe;
+      format = 'html';
+      plain = stripHtml(safe);
+    }
+  }
+  // ② Markdown（显式开关或 HTML 不可用时）
+  if (!content && mdRaw && mdRaw.length <= MAX_MARKDOWN) {
+    const safe = markdownToHtml(mdRaw, url);
+    if (hasVisibleContent(safe)) {
+      content = safe;
+      format = 'markdown';
+      plain = stripHtml(safe);
+    }
+  }
+  // ③ 纯文本兜底
+  if (!content) {
+    if (!text) return res.status(400).json({ ok: false, error: '没有可写入的内容' });
+    if (text.length > MAX_TEXT) {
+      return res.status(400).json({ ok: false, error: `文本超过 ${MAX_TEXT} 字符（HTML/Markdown 亦超出上限）` });
+    }
+    content = plainTextToHtml(text);
+    format = 'text';
+    plain = text;
+  }
+
+  content += sourceTail(url, title);
+  const note = createNote(content, plain, tags);
   res.status(201).json({
     ok: true,
     id: note.id,
     source,
+    format,
     hasSource: !!cleanSourceUrl(url),
     tags: note.tags,
     created_at: note.created_at

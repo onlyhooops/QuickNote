@@ -4,12 +4,15 @@ import DOMPurify from 'dompurify';
 const SCHEMA = {
   ALLOWED_TAGS: [
     'p', 'div', 'br', 'b', 'strong', 'i', 'em', 'u', 's', 'del',
-    'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'hr', 'img',
-    'span', 'a', 'iframe'
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote',
+    'pre', 'code', 'hr', 'img', 'span', 'a', 'iframe',
+    // 表格（PopClip 网页摘抄保排版）
+    'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td'
   ],
   ALLOWED_ATTR: [
     'src', 'alt', 'href', 'title', 'target', 'rel', 'class',
     'style', 'loading', 'allow', 'allowfullscreen', 'scrolling', 'frameborder', 'referrerpolicy',
+    'colspan', 'rowspan',
     // 嵌入组件用的 data-* 属性
     'data-embed', 'data-href', 'data-provider', 'data-iframe', 'data-title', 'data-desc', 'data-thumb', 'data-h'
   ],

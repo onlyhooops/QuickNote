@@ -5,6 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
+import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
 import {
   Bold, Italic, Strikethrough, Heading2, Heading3,
   List, ListOrdered, Quote, Link2, ImagePlus, Paperclip, Undo2, Redo2, Sparkles
@@ -48,6 +49,11 @@ const editor = useEditor({
     DownloadLink.configure({ openOnClick: false, autolink: true }),
     Image.configure({ allowBase64: false }),
     Placeholder.configure({ placeholder: props.placeholder }),
+    // 表格：PopClip 网页摘抄保排版所需（resizable 关闭，保持轻量）
+    Table.configure({ resizable: false }),
+    TableRow,
+    TableHeader,
+    TableCell,
     Embed
   ],
   editorProps: {
