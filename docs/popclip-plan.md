@@ -1,6 +1,6 @@
 # PopClip 快速笔记 · 接入设计与落地记录
 
-> 状态：**M1–M4 已完成**。M1 后端 `/api/quickin`（JSON 与表单、tags、空/超长 400、令牌 403↔201）；M2 snippet（`.popcliptxt`）；M3 package（`QuickNote.popclipext/` + `.popclipextz`，含图标、baseurl/tags/secret 令牌/keepmarkdown 选项）；**M4 排版保留**（`captureHtml` 捕获网页 HTML，服务端 `sanitize-html` 白名单净化，保留标题/列表/引用/代码块/**表格**，去图片与网页样式；Markdown 源码开关；HTML ≤ 200KB / Markdown ≤ 100KB 超限回退）。M5（发布到 PopClip 目录，需签名+shell rationale）可选。
+> 状态：**M1–M4 已完成**。M1 后端 `/api/quickin`（JSON 与表单、tags、空/超长 400、令牌 403↔201）；M2 snippet（`.popcliptxt`）；M3 package（`QuickNote.popclipext/` + `.popclipextz`，含图标、baseurl/tags/secret 令牌/排版方式选项）；**M4 排版保留**（`captureHtml` 捕获网页 HTML，服务端 `sanitize-html` 白名单净化，保留标题/列表/引用/代码块/**表格**，去图片与网页样式；Markdown 源码可选；HTML ≤ 200KB / Markdown ≤ 100KB 超限回退）。M5（发布到 PopClip 目录，需签名+shell rationale）可选。
 
 ## 一、调研结论：PopClip 扩展如何开发
 
@@ -38,7 +38,7 @@
   - `baseurl`：默认 `http://127.0.0.1:3987`；
   - `tags`：可选，逗号分隔的默认标签；
   - `token`（secret，可选，留空则不发送）；
-  - `keepmarkdown`（boolean，默认关）：开启后按 Markdown 源码解析（`POPCLIP_MARKDOWN`）。
+  - `format`（multiple：`html` / `markdown`，默认网页富文本）：选 Markdown 源码时解析 `POPCLIP_MARKDOWN`。
 - 动作类型：`shell script`；脚本核心（注意防注入/多行）：
   ```sh
   # 用 stdin 传正文，避免 shell 元字符/换行破坏参数
@@ -56,7 +56,7 @@
 1. **M1 ✅** 后端 `POST /api/quickin`：手测（curl）→ 时间轴出现该时间点；空/超长校验；token 可选生效。
 2. **M2 ✅** 最小 snippet：任意 app 选中文本 → PopClip「记入快记」→ 时间点生成、对勾。
 3. **M3 ✅** package 化：图标/选项(base/tags/token)/多行文本验证/失败反馈；仓库内置安装说明；设置页可下载内置令牌的 `.popclipextz`。
-4. **M4 ✅ 排版保留**：`captureHtml: true` → 发送 `POPCLIP_HTML`；服务端白名单净化（`sanitize-html`）保留标题/加粗斜体/列表/引用/代码块/表格/链接，丢弃图片、内联样式、class、脚本、iframe、复制按钮；`div` 包装保留、空壳清理、相对链接按页面 URL 补全；Markdown 源码走 `keepmarkdown` 开关（`marked` GFM）；HTML ≤ 200KB / Markdown ≤ 100KB 超限回退纯文本；表格已加入前端 DOMPurify 白名单与 Tiptap 表格扩展。
+4. **M4 ✅ 排版保留**：`captureHtml: true` → 发送 `POPCLIP_HTML`；服务端白名单净化（`sanitize-html`）保留标题/加粗斜体/列表/引用/代码块/表格/链接，丢弃图片、内联样式、class、脚本、iframe、复制按钮；`div` 包装保留、空壳清理、相对链接按页面 URL 补全；Markdown 源码走 `format` 选项（`marked` GFM）；HTML ≤ 200KB / Markdown ≤ 100KB 超限回退纯文本；表格已加入前端 DOMPurify 白名单与 Tiptap 表格扩展。
 5. **M5（可选）**：提交 PopClip 目录（需签名与 shell rationale）；否则保持自用免发布。
 
 ## 四、风险与对策

@@ -2,7 +2,7 @@
 # 记入快记 —— 把选中内容写入本机 QuickNote 服务
 # 说明：PopClip 的 JS 网络受 ATS 限制仅 https，本地 http 需 shell + curl。
 # 排版：默认发送 POPCLIP_HTML（网页富文本，保留标题/列表/引用/代码块/表格）；
-#       开启「保留 Markdown 排版」时发送 POPCLIP_MARKDOWN（适合复制到的是 Markdown 源码）；
+#       扩展选项「排版方式」选 Markdown 源码时发送 POPCLIP_MARKDOWN；
 #       两者都不可用/超限时回退 POPCLIP_TEXT。服务端仍会再净化一次。
 # 以下两行会被「设置 → 快捷写入 → 下载插件」按当前服务地址/令牌改写（留空即用默认值）。
 BASE_BAKED=''
@@ -16,10 +16,10 @@ trap 'rm -rf "$tmpdir"' EXIT
 
 curl_args=( -sS -o /dev/null -w '%{http_code}' -X POST "$base/api/quickin" --data-urlencode "text@-" )
 
-# 排版字段：html 优先；开启 keepmarkdown 时用 markdown；超限则不附带（服务端回退 text）
+# 排版字段：默认 html；选项「排版方式」= markdown 时用 markdown；超限则不附带（服务端回退 text）
 payload_kind=""
 payload_limit=0
-if [ "${POPCLIP_OPTION_KEEPMARKDOWN:-0}" = "1" ] && [ -n "${POPCLIP_MARKDOWN:-}" ]; then
+if [ "${POPCLIP_OPTION_FORMAT:-html}" = "markdown" ] && [ -n "${POPCLIP_MARKDOWN:-}" ]; then
   payload_kind="markdown"
   payload_limit=100000
   printf '%s' "$POPCLIP_MARKDOWN" > "$tmpdir/payload"

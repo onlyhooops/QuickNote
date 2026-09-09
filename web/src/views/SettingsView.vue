@@ -503,7 +503,7 @@ onMounted(() => {
         <p class="row-tip" style="margin: 0 0 10px">
           排版保留：网页摘抄默认保留<strong>标题 / 列表 / 引用 / 代码块 / 表格</strong>等排版
           （自动去掉图片、网页样式与脚本，安全净化后再入库）；若复制到的是 Markdown 源码，
-          可在 PopClip 扩展设置里开启「保留 Markdown 排版」。超长内容（HTML &gt; 200KB）会自动回退纯文本。
+          可在 PopClip 扩展设置里把「排版方式」选为「Markdown 源码」。超长内容（HTML &gt; 200KB）会自动回退纯文本。
         </p>
 
         <label class="switch-row">
