@@ -4,14 +4,10 @@
    ===================================================================== */
 
 :root {
-  /* 全局字体统一：中/西/数字同一无衬线系，层级靠字重/字号/字距区分
-     —— 三段式字体栈：西文栈 → 中文栈 → 通用关键字（generic 必须放最后！
-        若把它塞在西文栈末尾，Chrome 会用系统 CJK 回退直接命中中文，
-        后面的中文栈（含自托管书法字体）永远不会被使用） */
-  --font-en: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-  --font-cn: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC';
-  --font-generic: sans-serif;
-  --sans: var(--font-en), var(--font-cn), var(--font-generic);
+  /* 全局字体统一：中/西/数字同一无衬线系，层级靠字重/字号/字距区分 */
+  --font-en: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-cn: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+  --sans: var(--font-en), var(--font-cn);
   --serif: var(--sans); /* 统一，不再启用衬线字体分层 */
   --mono: var(--sans);  /* 统一；对齐用 font-variant-numeric: tabular-nums */
   --radius: 18px;
@@ -39,8 +35,6 @@ html[data-theme='light'] {
   --focus: rgba(76, 92, 240, 0.16);
   --ink: #17181c;
   --paper: #f2f1ed;
-  /* 不透明的表面底色（纸感主题下 --bg 为 transparent，需要实色时用它） */
-  --surface-solid: #f4f3ef;
   --shadow: 0 1px 1px rgba(24, 25, 28, 0.03), 0 6px 20px rgba(24, 25, 28, 0.04);
   --shadow-lg: 0 20px 60px rgba(20, 20, 24, 0.16);
 }
@@ -64,7 +58,6 @@ html[data-theme='dark'] {
   --focus: rgba(139, 147, 255, 0.22);
   --ink: #e9e9ec;
   --paper: #131317;
-  --surface-solid: #0f0f12;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.32);
   --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
@@ -1108,7 +1101,7 @@ svg {
 .overlay .scrim {
   position: absolute;
   inset: 0;
-  background: color-mix(in srgb, var(--surface-solid) 60%, transparent);
+  background: color-mix(in srgb, var(--bg) 60%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   animation: fade 0.22s var(--ease);
@@ -1237,8 +1230,6 @@ svg {
 }
 .seg {
   display: inline-flex;
-  flex-wrap: wrap;
-  max-width: 100%;
   background: var(--panel-2);
   border: 1px solid var(--line-soft);
   border-radius: 999px;
@@ -1610,7 +1601,7 @@ blockquote.ai-added > :last-child {
 .font-preview {
   margin-top: 14px;
   padding: 16px 18px;
-  background: var(--panel-3);
+  background: var(--bg);
   border-radius: 12px;
 }
 .font-preview p {

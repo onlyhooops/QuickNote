@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue';
 import { api } from '../api.js';
-import { applyTheme, getThemePref, setThemePref, effectiveTheme, isDarkTheme, THEME_OPTIONS } from '../theme.js';
+import { applyTheme, getThemePref, setThemePref } from '../theme.js';
 import { SCHEMES, getScheme, setScheme } from '../font.js';
 import { Eye, EyeOff, Download, RefreshCw, Copy, Check } from 'lucide-vue-next';
 
@@ -10,13 +10,11 @@ const BUILD_TIME = __BUILD_TIME__;
 const REPO_URL = 'https://github.com/onlyhooops/QuickNote';
 
 const pref = ref(getThemePref());
-const THEMES = THEME_OPTIONS;
-const prefLabel = computed(() => {
-  const cur = THEME_OPTIONS.find((t) => t.id === pref.value);
-  const paper = pref.value === 'xuan' || pref.value === 'sangpi';
-  if (!paper) return cur?.label ?? '跟随系统';
-  return `${cur?.label}（${isDarkTheme(effectiveTheme(pref.value)) ? '夜色版' : '浅色版'}）`;
-});
+const THEMES = [
+  { id: 'auto', label: '跟随系统' },
+  { id: 'light', label: '浅色' },
+  { id: 'dark', label: '深色' }
+];
 function chooseTheme(p) {
   pref.value = p;
   setThemePref(p);
@@ -377,21 +375,16 @@ onMounted(() => {
       <h3 class="set-title">外观</h3>
       <div class="set-card">
         <p style="margin: 0 0 12px; font-size: 14px; color: var(--tx-2)">
-          主题 · 当前生效：{{ prefLabel }}
+          明暗主题 · 当前生效：{{ pref === 'auto' ? '跟随系统' : pref === 'dark' ? '深色' : '浅色' }}
         </p>
         <div class="seg">
           <button
             v-for="t in THEMES"
             :key="t.id"
             :class="{ on: pref === t.id }"
-            :title="t.desc || ''"
             @click="chooseTheme(t.id)"
           >{{ t.label }}</button>
         </div>
-        <p style="margin: 12px 0 0; font-size: 13px; color: var(--tx-2)">
-          宣纸 / 桑皮纸为纸感主题：复刻纸色、纤维与帘纹，全局生效；<strong>夜色版跟随系统深色偏好自动启用</strong>
-          （墨纸底而非纯黑），系统开启「增强对比度」时自动关闭纸纹。
-        </p>
       </div>
     </div>
 
@@ -399,9 +392,7 @@ onMounted(() => {
       <h3 class="set-title">字体</h3>
       <div class="set-card">
         <p style="margin: 0 0 14px; font-size: 13px; color: var(--tx-2)">
-          4 套方案，中文 / 英文成对，点击即全局生效并可在下方预览。<br />
-          <strong>楷体</strong>为自托管中文字体（霞鹜文楷，分片按需加载，不依赖系统字体）：
-          中文走书法字体，<strong>英文、数字与半角符号仍用默认字体</strong>；字体未覆盖的生僻字自动回退，不会出现显示错误。
+          3 套方案，中文 / 英文成对，点击即全局生效并可在下方预览。
         </p>
         <div class="font-schemes">
           <button

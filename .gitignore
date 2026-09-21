@@ -1,9 +1,6 @@
 # dependencies
 node_modules/
 
-# 字体工具链（仅开发期）：本地依赖与官方字体下载缓存
-tools/fonts/cache/
-
 # 便携 Node（部署脚本自动下载，不入库）
 .node/
 

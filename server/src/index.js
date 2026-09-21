@@ -37,11 +37,6 @@ app.get('/api/health', (_req, res) => res.json({ ok: true, name: 'quicknote' }))
 
 // ---- 前端构建产物（生产单进程模式） ----
 if (fs.existsSync(WEB_DIST)) {
-  // 自托管字体分片（/fonts/*）：文件名带内容哈希，可长期强缓存
-  app.use(
-    '/fonts',
-    express.static(path.join(WEB_DIST, 'fonts'), { maxAge: '365d', immutable: true })
-  );
   app.use(express.static(WEB_DIST));
   // SPA fallback：非 /api、非 /images 的 GET 一律回退到 index.html（hash 路由其实用不到，保险起见）
   app.use((req, res, next) => {

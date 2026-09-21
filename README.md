@@ -24,8 +24,7 @@
 - **AI 助手（可选）**：设置页启用并填入 DeepSeek Key 后，编辑器可一键「✨ AI 探索」——对<strong>纯文字</strong>做「溯源」与「扩展」；返回文案不含附加说明，审核后以「✨ AI 补全」区块插入、与原文排版区分，区块**行末落款**“由 DeepSeek 生成，可能存在错误，请核验”（自动剔除图片/网页卡/音乐/视频卡片，不参与分析）。Key 仅存本机服务端，设置页可明文核对（仅本机/令牌可读回）
 - **随览 & 回响**：随览随机拾取一个时间点；回响展示**往年**「同月同日 / 历史上的今天」时刻并按年份分组（当年/当天新写的记录不会进入回响）
 - **日期增强**：公历节日 / 农历日期与节日 / 节气（`lunar-javascript`）
-- **明暗与纸感主题**：浅色 / 深色 / 跟随系统 / **宣纸** / **桑皮纸**；两个纸主题各自复刻纸色、纤维与帘纹（纯 CSS + 内联 SVG，零位图），并各自带**夜色版**（跟随系统深色偏好自动启用，墨纸底而非纯黑），系统开启「增强对比度」时自动关闭纸纹
-- **字体方案**：**4 套**（中英文成对）+ 实时预览；其中 **楷体 · 霞鹜文楷**为**自托管中文字体**（`web/public/fonts`，按 unicode-range 分片、浏览器按需下载），中文走书法字体、**英文/数字/半角符号仍用默认字体**；字体未覆盖的生僻字自动回退，不出现豆腐块
+- **明暗主题**：浅色 / 深色 / 跟随系统；**3 套字体方案**（中英文成对）+ 实时预览
 - **标签与检索**：输入即默认入库，聚焦「＋标签」弹出<strong>曾用标签</strong>点选复用（无需重复手打），胶囊 ✕ 移除未使用的孤儿标签；时间轴/侧栏筛选；纯文本关键字检索
 - **备份**：单向 WebDAV（手动 + 定时），本地保留最近 5 份快照
 - **PopClip 快捷写入（macOS）**：选中文字一键「记入快记」；**网页摘抄保留原排版**（标题/列表/引用/代码块/表格；自动去图片、网页样式与脚本，服务端白名单净化），并自动附「来源」超链接（仅支持的浏览器内有效，非网页摘抄不标注）；Markdown 源码可在扩展里选择「排版方式」解析；设置页可生成/复制/清除访问令牌，并**直接下载内置令牌与当前服务地址的 `QuickNote.popclipextz`** 安装即用
@@ -83,7 +82,7 @@ sudo QUICKNOTE_DIR=/opt/quicknote \
 - **时间轴**：中心线交替节点悬浮预览、点击时间点或文字条目全屏查看；**随览**随机拾取；**回响**看历史上的今天（往年同月同日的记录）
 - **嵌入**：粘贴 YouTube/Bilibili/Apple Music 链接自动变播放器，普通网页变链接卡
 - **标签**：编辑时点选，时间轴/侧栏筛选
-- **设置**：外观与字体、主题（含宣纸 / 桑皮纸）、4 套字体方案、WebDAV 备份（单向 + 定时）与本地快照
+- **设置**：明暗主题、3 套字体方案、WebDAV 备份（单向 + 定时）与本地快照
 - **PWA**：手机浏览器「添加到主屏幕」全屏使用
 
 ### 4️⃣ 日常运维
@@ -247,53 +246,17 @@ systemd 里取消 `Environment=QUICKNOTE_HOST=0.0.0.0` 注释并重启；放行�
 │       ├── routes/         # notes / tags / images / attachments / unfurl / ai / quickin / backup / update
 │       └── backup/         # 本地快照 zip + WebDAV 上传
 ├── web/               # Vue 3 前端
-│   ├── public/
-│   │   ├── icons/          # PWA 图标
-│   │   └── fonts/          # 自托管中文字体分片（自动生成，内含许可原文与说明）
+│   ├── public/             # PWA 图标 / manifest
 │   └── src/
 │       ├── views/          # WriteView(录入) / TimelineView(时间轴) / SettingsView(设置)
 │       ├── components/     # TipTapEditor / TagPicker / TimelineItem / MomentCard / FullNoteModal / AiExplore / RandomOverlay(随览) / LastYearOverlay(回响)
-│       ├── theme.js        # 主题与纸感主题的偏好/生效值/首帧同步
-│       ├── font.js         # 4 套字体方案（三段式字体栈：西文 → 中文 → 通用关键字）
-│       ├── themes-paper.css      # 宣纸 / 桑皮纸纸纹（纯 CSS + 内联 SVG）
-│       ├── fonts.generated.css   # 自动生成：@font-face + unicode-range 分片（勿手改）
 │       ├── embed.js        # 链接→嵌入组件（YouTube/Bilibili/Apple/网页卡）
 │       ├── datecn.js       # 公历/农历/节日/节气 格式化
 │       └── rich.js         # 净化与统计（DOMPurify）
 ├── extensions/popclip/ # PopClip 扩展（Config.yaml + 脚本 + .popclipextz 模板）
-├── scripts/           # smoke.mjs 冒烟 / verify-themes.mjs 主题与字体实测 /
-│                      # gen-fonts.mjs 字体分包 / check-fonts.mjs 覆盖率自检
-├── tools/fonts/       # 字体分包工具链（仅开发期：cn-font-split + fontkit，不参与部署）
-├── docs/              # 调研与计划（paper-texture-research / font-selfhost-research / popclip-plan）
+├── scripts/smoke.mjs  # Playwright 冒烟测试（桌面+移动）
 ├── deploy/            # install.sh 首次部署 / update.sh 智能更新 + systemd 单元示例
 └── LICENSE            # MIT
-```
-
-## 🔤 自托管字体与纸张主题
-
-**字体分包**（开发期一次性生成，产物入库，部署时不联网、不装工具）：
-
-```bash
-npm run fonts:gen     # 下载官方字体 → cn-font-split 切分 → 写 web/public/fonts + src/fonts.generated.css
-npm run fonts:check   # 覆盖率自检（离线可跑，可挂 CI）
-```
-
-- 分包策略：按 `unicode-range` 切成 ~320 个 woff2，浏览器**只下载当前页面用到的分片**（一屏中文 ≈ 3–5 片 / 约 100–300KB，实测首屏共 810KB / 字体总量 25.4MB）。
-- 纯西文分片规则会被裁掉，加上「西文栈 → 中文栈 → 通用关键字」三段式字体栈，保证**英文 / 数字 / 半角符号走默认字体**，中文全角标点随中文字体。
-- `@font-face` 不含 `local()`，避免装了同名字体的机器走本地版本，保证各端渲染一致。
-- **覆盖率硬校验**：霞鹜文楷对 GB2312（6763）与《通用规范汉字表》（8105）**缺字 0**（逐码位核对分片并集，实测 46,491 码位）。
-- **字体授权**：只收录「许可明确允许再分发 **且** 允许子集化/转格式」的字体。霞鹜文楷为 SIL OFL 1.1，且上游 OFL 附有 **[ADDITIONAL PERMISSION]** 明文允许为 Web 交付做子集化与 WOFF2 转换。详见 `docs/font-selfhost-research.md`（含为何不采用阿里妈妈刀隶体、微软/中易与华文系字体的原因）。
-
-**纸张主题**（复刻依据见 `docs/paper-texture-research.md`）：
-
-- 宣纸 `#F3EEE0`（细密帘纹 6px、云絮长纤维、哑光）；桑皮纸 `#E9D6B1` 叠纹后约 `#E0CBA2`（粗帘纹多周期错位、纤维束与结节、纸面厚薄不匀）。
-- 实现：一个 `position: fixed` 装饰层承载全部纸纹（底色 + 多层渐变 + 内联 `feTurbulence` SVG），正文层**不参与 `filter`**、也不使用 `background-attachment: fixed`（WebKit 不生效），滚动零成本。
-- 夜色版把 `multiply` 换成 `screen / soft-light` 并降低幅值，得到「墨纸」而非纯黑；`prefers-contrast: more` 时自动关闭纸纹。
-
-**主题与字体的自动化实测**（需先启动服务）：
-
-```bash
-node scripts/verify-themes.mjs http://127.0.0.1:3987   # 34 项：纸纹层/夜色版/字形归属/按需加载
 ```
 
 ## 📡 API
