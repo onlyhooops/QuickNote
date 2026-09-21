@@ -13,14 +13,34 @@
     <meta name="apple-mobile-web-app-title" content="快记" />
     <meta name="description" content="极简随手记：第一屏即录入，时间点构筑时间轴，随览与去年今时" />
     <script>
-      // 首帧前应用主题，避免闪烁
+      // 首帧前应用主题，避免闪烁（与 src/theme.js 的取值保持一致：
+      // light | dark | xuan | xuan-dark | sangpi | sangpi-dark）
       (function () {
         try {
+          var META = {
+            light: '#faf9f7',
+            dark: '#101013',
+            xuan: '#f3eee0',
+            'xuan-dark': '#1a1811',
+            sangpi: '#e0cba2',
+            'sangpi-dark': '#1b1710'
+          };
           var pref = localStorage.getItem('quicknote.theme') || 'auto';
-          var dark =
-            pref === 'dark' ||
-            (pref === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+          var dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var paper = pref === 'xuan' || pref === 'sangpi';
+          var eff =
+            pref === 'auto'
+              ? dark
+                ? 'dark'
+                : 'light'
+              : paper
+                ? dark
+                  ? pref + '-dark'
+                  : pref
+                : pref;
+          document.documentElement.dataset.theme = eff;
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m && META[eff]) m.setAttribute('content', META[eff]);
         } catch (e) {}
       })();
     </script>

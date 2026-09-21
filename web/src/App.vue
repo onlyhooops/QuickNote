@@ -6,7 +6,7 @@ import RandomOverlay from './components/RandomOverlay.vue';
 import LastYearOverlay from './components/LastYearOverlay.vue';
 import FullNoteModal from './components/FullNoteModal.vue';
 import { api } from './api.js';
-import { effectiveTheme, getThemePref, setThemePref } from './theme.js';
+import { effectiveTheme, getThemePref, setThemePref, isDarkTheme, THEME_OPTIONS, THEME_CYCLE } from './theme.js';
 
 const route = useRoute();
 const router = useRouter();
@@ -54,12 +54,12 @@ function openLastYear() {
 
 const themePref = ref(getThemePref());
 const themeEff = computed(() => effectiveTheme(themePref.value));
-const themeLabel = computed(() =>
-  themePref.value === 'auto' ? '跟随系统' : themePref.value === 'dark' ? '深色' : '浅色'
+const themeDark = computed(() => isDarkTheme(themeEff.value));
+const themeLabel = computed(
+  () => THEME_OPTIONS.find((t) => t.id === themePref.value)?.label ?? '跟随系统'
 );
 function cycleTheme() {
-  const order = ['auto', 'light', 'dark'];
-  const next = order[(order.indexOf(themePref.value) + 1) % order.length];
+  const next = THEME_CYCLE[(THEME_CYCLE.indexOf(themePref.value) + 1) % THEME_CYCLE.length];
   themePref.value = next;
   setThemePref(next);
 }
@@ -88,6 +88,8 @@ watch(() => route.fullPath, refreshTags);
 
 <template>
   <div class="app">
+    <!-- 纸感主题的纹理层：fixed 装饰层，不接收事件，正文层不参与 filter -->
+    <div class="paper-tex" aria-hidden="true"></div>
     <aside class="side">
       <div class="side-brand">
         <span class="dot"></span>
@@ -135,7 +137,7 @@ watch(() => route.fullPath, refreshTags);
         <div class="mode-row">
           <span>{{ themeLabel }}主题</span>
           <button class="icon-btn" data-theme-toggle :title="'主题：' + themeLabel + '（点击切换）'" @click="cycleTheme">
-            <Moon v-if="themeEff === 'dark'" :size="16" :stroke-width="1.8" />
+            <Moon v-if="themeDark" :size="16" :stroke-width="1.8" />
             <Sun v-else :size="16" :stroke-width="1.8" />
           </button>
         </div>
@@ -148,7 +150,7 @@ watch(() => route.fullPath, refreshTags);
       <button class="icon-btn" data-ov="random" title="随览" @click="openRandom"><Dices :size="19" :stroke-width="1.8" /></button>
       <button class="icon-btn" data-ov="lastyear" title="回响" @click="openLastYear"><History :size="19" :stroke-width="1.8" /></button>
       <button class="icon-btn" data-theme-toggle :title="'主题：' + themeLabel" @click="cycleTheme">
-        <Moon v-if="themeEff === 'dark'" :size="18" :stroke-width="1.8" />
+        <Moon v-if="themeDark" :size="18" :stroke-width="1.8" />
         <Sun v-else :size="18" :stroke-width="1.8" />
       </button>
     </header>

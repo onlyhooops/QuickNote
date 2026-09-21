@@ -1,0 +1,9 @@
+字体：霞鹜文楷 Medium
+字体家族：LXGW WenKai
+用途：楷体 · 粗体/标题（真实 Medium 字重，非浏览器合成粗体）
+来源：https://github.com/lxgw/LxgwWenKai
+版权：Copyright 2021-2026 LXGW (https://github.com/lxgw/LxgwWenKai)，基于 Fontworks Klee One（The Klee Project Authors）
+许可：SIL Open Font License 1.1（OFL-1.1）
+
+本目录下的 *.woff2 是上述字体的分片子集（由 cn-font-split 按 unicode-range 切分），
+仅用于「快记 QuickNote」自托管渲染；字体本身的版权与许可归原作者所有，未做任何字形修改。
